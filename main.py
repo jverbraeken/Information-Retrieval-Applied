@@ -1,5 +1,6 @@
 import codecs
 import json
+import requests
 
 def main():
     instanceA1, truthA1 = parse("datasetA1/instances.jsonl", "datasetA1/truth.jsonl")
@@ -16,7 +17,6 @@ def parse(file1, file2):
         truth = json.load(f)
 
     return instances, truth
-
 
 if __name__ == "__main__":
     main()
