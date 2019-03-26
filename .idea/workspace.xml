@@ -108,9 +108,33 @@
     <sorting>DEFINITION_ORDER</sorting>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-7" />
-    <option name="width" value="974" />
-    <option name="height" value="1087" />
+    <option name="x" value="-8" />
+    <option name="width" value="975" />
+    <option name="height" value="1088" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="Information-Retrieval-Applied" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Information-Retrieval-Applied" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="Information-Retrieval-Applied" type="b2602c69:ProjectViewProjectNode" />
+              <item name="Information-Retrieval-Applied" type="462c0819:PsiDirectoryNode" />
+              <item name="datasetA1" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+    </panes>
   </component>
   <component name="ProjectLevelVcsManager">
     <ConfirmationsSetting value="1" id="Add" />
