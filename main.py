@@ -26,6 +26,9 @@ def extract_features(dataset: List[Dict]) -> List[Dict]:
         if len(article_paragraph.split()) >= 100:
             readability_article_paragraphs = Readability(article_paragraph).flesch_kincaid().score
 
+        starts_with_number_post_title = item['postText'][0][0].isdigit()
+        number_of_dots_post_title = item['postText'][0][0].count('.')
+
         result.append({
             "num_characters_post_title": num_characters_post_title,
             "num_characters_article_title": num_characters_article_title,
@@ -89,7 +92,10 @@ def extract_features(dataset: List[Dict]) -> List[Dict]:
             "sentiment_article_title": sentiment_article_title,
             "sentiment_article_paragraphs": sentiment_article_paragraphs,
 
-            "readability_article_paragraphs": readability_article_paragraphs
+            "readability_article_paragraphs": readability_article_paragraphs,
+
+            "starts_with_number_post_title": starts_with_number_post_title,
+            "number_of_dots_post_title": number_of_dots_post_title
         })
     return result
 
