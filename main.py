@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple
 import requests
 
 
-def extract_features(dataset: List) -> List[Dict]:
+def extract_features(dataset: List[Dict]) -> List[Dict]:
     result = []
     for item in dataset:
         result.append({
@@ -73,7 +73,7 @@ def main() -> None:
     instanceA1, truthA1 = parse("datasetA1/instances.jsonl", "datasetA1/truth.jsonl")
     instanceA2, truthA2 = parse("datasetA2/instances.jsonl", "datasetA2/truth.jsonl")
     clickbaitB, nonclickbaitB = parse("datasetB/clickbait_data.jsonl", "datasetB/non_clickbait_data.jsonl")
-
+    featuresA1 = extract_features(instanceA1)
 
 
 def parse(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
