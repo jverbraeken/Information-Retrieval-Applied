@@ -1,6 +1,7 @@
 import codecs
 import json
 from typing import Dict, List, Tuple
+import requests
 
 
 def extract_features(dataset: List) -> List[Dict]:
@@ -83,7 +84,6 @@ def parse(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
         truth = json.load(f)
 
     return instances, truth
-
 
 if __name__ == "__main__":
     main()
