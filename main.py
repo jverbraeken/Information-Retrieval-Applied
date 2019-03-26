@@ -1,6 +1,7 @@
 import codecs
 import json
 from typing import Dict, List, Tuple
+import nltk.sentiment
 import requests
 
 
@@ -13,6 +14,11 @@ def extract_features(dataset: List[Dict]) -> List[Dict]:
         num_characters_article_keywords = sum([len(x) for x in item['targetKeywords']])
         num_characters_article_captions = sum([len(x) for x in item['targetCaptions']])
         num_characters_article_paragraphs = sum([len(x) for x in item['targetParagraphs']])
+
+        sentiment_analyzer = nltk.sentiment.vader.SentimentIntensityAnalyzer()
+        sentiment_post_title = sentiment_analyzer.polarity_scores(item['postText'][0])['compound']
+        sentiment_article_title = sentiment_analyzer.polarity_scores(item['targetTitle'][0])['compound']
+        sentiment_article_paragraphs = sum(sentiment_analyzer.polarity_scores(x)['compound'] for x in item['targetParagraphs'])
 
         result.append({
             "num_characters_post_title": num_characters_post_title,
@@ -71,7 +77,11 @@ def extract_features(dataset: List[Dict]) -> List[Dict]:
             "num_informal_english_words": 1,
 
             "ratio_formal_words": 1,
-            "ratio_informal_words": 1
+            "ratio_informal_words": 1,
+
+            "sentiment_post_title": sentiment_post_title,
+            "sentiment_article_title": sentiment_article_title,
+            "sentiment_article_paragraphs": sentiment_article_paragraphs
         })
     return result
 
