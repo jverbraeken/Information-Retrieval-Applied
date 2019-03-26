@@ -3,6 +3,7 @@ import json
 from typing import Dict, List, Tuple
 import nltk.sentiment
 import requests
+from readability import Readability
 
 
 def extract_features(dataset: List[Dict]) -> List[Dict]:
@@ -19,6 +20,11 @@ def extract_features(dataset: List[Dict]) -> List[Dict]:
         sentiment_post_title = sentiment_analyzer.polarity_scores(item['postText'][0])['compound']
         sentiment_article_title = sentiment_analyzer.polarity_scores(item['targetTitle'][0])['compound']
         sentiment_article_paragraphs = sum(sentiment_analyzer.polarity_scores(x)['compound'] for x in item['targetParagraphs'])
+
+        readability_article_paragraphs = None
+        article_paragraph = ' '.join(item['targetParagraphs'])
+        if len(article_paragraph.split()) >= 100:
+            readability_article_paragraphs = Readability(article_paragraph).flesch_kincaid().score
 
         result.append({
             "num_characters_post_title": num_characters_post_title,
@@ -81,7 +87,9 @@ def extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "sentiment_post_title": sentiment_post_title,
             "sentiment_article_title": sentiment_article_title,
-            "sentiment_article_paragraphs": sentiment_article_paragraphs
+            "sentiment_article_paragraphs": sentiment_article_paragraphs,
+
+            "readability_article_paragraphs": readability_article_paragraphs
         })
     return result
 
