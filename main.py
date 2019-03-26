@@ -7,33 +7,40 @@ import requests
 def extract_features(dataset: List[Dict]) -> List[Dict]:
     result = []
     for item in dataset:
+        num_characters_post_title = sum([len(x) for x in item['postText']])
+        num_characters_article_title = sum([len(x) for x in item['targetTitle']])
+        num_characters_article_description = sum([len(x) for x in item['targetDescription']])
+        num_characters_article_keywords = sum([len(x) for x in item['targetKeywords']])
+        num_characters_article_captions = sum([len(x) for x in item['targetCaptions']])
+        num_characters_article_paragraphs = sum([len(x) for x in item['targetParagraphs']])
+
         result.append({
-            "num_characters_post_title": 1,
-            "num_characters_article_title": 1,
-            "num_characters_article_description": 1,
-            "num_characters_article_keywords": 1,
-            "num_characters_article_captions": 1,
-            "num_characters_article_paragraphs": 1,
+            "num_characters_post_title": num_characters_post_title,
+            "num_characters_article_title": num_characters_article_title,
+            "num_characters_article_description": num_characters_article_description,
+            "num_characters_article_keywords": num_characters_article_keywords,
+            "num_characters_article_captions": num_characters_article_captions,
+            "num_characters_article_paragraphs": num_characters_article_paragraphs,
 
-            "diff_num_characters_post_title_article_title": 1,
-            "diff_num_characters_post_title_article_description": 1,
-            "diff_num_characters_post_title_article_keywords": 1,
-            "diff_num_characters_post_title_article_captions": 1,
-            "diff_num_characters_post_title_article_paragraphs": 1,
+            "diff_num_characters_post_title_article_title": abs(num_characters_post_title - num_characters_article_title),
+            "diff_num_characters_post_title_article_description": abs(num_characters_post_title - num_characters_article_description),
+            "diff_num_characters_post_title_article_keywords": abs(num_characters_post_title - num_characters_article_keywords),
+            "diff_num_characters_post_title_article_captions": abs(num_characters_post_title - num_characters_article_captions),
+            "diff_num_characters_post_title_article_paragraphs": abs(num_characters_post_title - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_title_article_description": 1,
-            "diff_num_characters_article_title_article_keywords": 1,
-            "diff_num_characters_article_title_article_captions": 1,
-            "diff_num_characters_article_title_article_paragraphs": 1,
+            "diff_num_characters_article_title_article_description": abs(num_characters_article_title - num_characters_article_description),
+            "diff_num_characters_article_title_article_keywords": abs(num_characters_article_title - num_characters_article_keywords),
+            "diff_num_characters_article_title_article_captions": abs(num_characters_article_title - num_characters_article_captions),
+            "diff_num_characters_article_title_article_paragraphs": abs(num_characters_article_title - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_description_article_keywords": 1,
-            "diff_num_characters_article_description_article_captions": 1,
-            "diff_num_characters_article_description_article_paragraphs": 1,
+            "diff_num_characters_article_description_article_keywords": abs(num_characters_article_description - num_characters_article_keywords),
+            "diff_num_characters_article_description_article_captions": abs(num_characters_article_description - num_characters_article_captions),
+            "diff_num_characters_article_description_article_paragraphs": abs(num_characters_article_description - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_keywords_article_captions": 1,
-            "diff_num_characters_article_keywords_article_paragraphs": 1,
+            "diff_num_characters_article_keywords_article_captions": abs(num_characters_article_keywords - num_characters_article_captions),
+            "diff_num_characters_article_keywords_article_paragraphs": abs(num_characters_article_keywords - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_captions_article_paragraphs": 1,
+            "diff_num_characters_article_captions_article_paragraphs": abs(num_characters_article_captions - num_characters_article_paragraphs),
 
             "ratio_num_characters_post_title_article_title": 1,
             "ratio_num_characters_post_title_article_description": 1,
@@ -64,7 +71,7 @@ def extract_features(dataset: List[Dict]) -> List[Dict]:
             "num_informal_english_words": 1,
 
             "ratio_formal_words": 1,
-            "ratio_informal_words": 1,
+            "ratio_informal_words": 1
         })
     return result
 
