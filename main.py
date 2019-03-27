@@ -1,7 +1,12 @@
 import codecs
 import json
 from typing import Dict, List, Tuple
+import enchant
+
+dictionary = enchant.Dict("en_US")
+import nltk.sentiment
 import requests
+from readability import Readability
 
 from sklearn import svm
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
@@ -10,65 +15,99 @@ from sklearn import datasets
 
 def extract_features(dataset: List[Dict]) -> List[Dict]:
     result = []
+
+
     for item in dataset:
+        num_characters_post_title = sum([len(x) for x in item['postText']])
+        num_characters_article_title = sum([len(x) for x in item['targetTitle']])
+        num_characters_article_description = sum([len(x) for x in item['targetDescription']])
+        num_characters_article_keywords = sum([len(x) for x in item['targetKeywords']])
+        num_characters_article_captions = sum([len(x) for x in item['targetCaptions']])
+        num_characters_article_paragraphs = sum([len(x) for x in item['targetParagraphs']])
+
+        num_formal_words = sum([0 if x == "" else dictionary.check(x) for y in item['targetParagraphs'] for x in y.split(' ')])
+        total_words = len([x for y in item['targetParagraphs'] for x in y.split(' ')])
+
+        sentiment_analyzer = nltk.sentiment.vader.SentimentIntensityAnalyzer()
+        sentiment_post_title = sentiment_analyzer.polarity_scores(item['postText'][0])['compound']
+        sentiment_article_title = sentiment_analyzer.polarity_scores(item['targetTitle'][0])['compound']
+        sentiment_article_paragraphs = sum(sentiment_analyzer.polarity_scores(x)['compound'] for x in item['targetParagraphs'])
+
+        readability_article_paragraphs = None
+        article_paragraph = ' '.join(item['targetParagraphs'])
+        if len(article_paragraph.split()) >= 100:
+            readability_article_paragraphs = Readability(article_paragraph).flesch_kincaid().score
+
+        starts_with_number_post_title = item['postText'][0][0].isdigit()
+        number_of_dots_post_title = item['postText'][0][0].count('.')
+
         result.append({
-            "num_characters_post_title": 1,
-            "num_characters_article_title": 1,
-            "num_characters_article_description": 1,
-            "num_characters_article_keywords": 1,
-            "num_characters_article_captions": 1,
-            "num_characters_article_paragraphs": 1,
+            "num_characters_post_title": num_characters_post_title,
+            "num_characters_article_title": num_characters_article_title,
+            "num_characters_article_description": num_characters_article_description,
+            "num_characters_article_keywords": num_characters_article_keywords,
+            "num_characters_article_captions": num_characters_article_captions,
+            "num_characters_article_paragraphs": num_characters_article_paragraphs,
 
-            "diff_num_characters_post_title_article_title": 1,
-            "diff_num_characters_post_title_article_description": 1,
-            "diff_num_characters_post_title_article_keywords": 1,
-            "diff_num_characters_post_title_article_captions": 1,
-            "diff_num_characters_post_title_article_paragraphs": 1,
+            "diff_num_characters_post_title_article_title": abs(num_characters_post_title - num_characters_article_title),
+            "diff_num_characters_post_title_article_description": abs(num_characters_post_title - num_characters_article_description),
+            "diff_num_characters_post_title_article_keywords": abs(num_characters_post_title - num_characters_article_keywords),
+            "diff_num_characters_post_title_article_captions": abs(num_characters_post_title - num_characters_article_captions),
+            "diff_num_characters_post_title_article_paragraphs": abs(num_characters_post_title - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_title_article_description": 1,
-            "diff_num_characters_article_title_article_keywords": 1,
-            "diff_num_characters_article_title_article_captions": 1,
-            "diff_num_characters_article_title_article_paragraphs": 1,
+            "diff_num_characters_article_title_article_description": abs(num_characters_article_title - num_characters_article_description),
+            "diff_num_characters_article_title_article_keywords": abs(num_characters_article_title - num_characters_article_keywords),
+            "diff_num_characters_article_title_article_captions": abs(num_characters_article_title - num_characters_article_captions),
+            "diff_num_characters_article_title_article_paragraphs": abs(num_characters_article_title - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_description_article_keywords": 1,
-            "diff_num_characters_article_description_article_captions": 1,
-            "diff_num_characters_article_description_article_paragraphs": 1,
+            "diff_num_characters_article_description_article_keywords": abs(num_characters_article_description - num_characters_article_keywords),
+            "diff_num_characters_article_description_article_captions": abs(num_characters_article_description - num_characters_article_captions),
+            "diff_num_characters_article_description_article_paragraphs": abs(num_characters_article_description - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_keywords_article_captions": 1,
-            "diff_num_characters_article_keywords_article_paragraphs": 1,
+            "diff_num_characters_article_keywords_article_captions": abs(num_characters_article_keywords - num_characters_article_captions),
+            "diff_num_characters_article_keywords_article_paragraphs": abs(num_characters_article_keywords - num_characters_article_paragraphs),
 
-            "diff_num_characters_article_captions_article_paragraphs": 1,
+            "diff_num_characters_article_captions_article_paragraphs": abs(num_characters_article_captions - num_characters_article_paragraphs),
 
-            "ratio_num_characters_post_title_article_title": 1,
-            "ratio_num_characters_post_title_article_description": 1,
-            "ratio_num_characters_post_title_article_keywords": 1,
-            "ratio_num_characters_post_title_article_captions": 1,
-            "ratio_num_characters_post_title_article_paragraphs": 1,
+            "ratio_num_characters_post_title_article_title": 0 if num_characters_article_title == 0 else num_characters_post_title / num_characters_article_title,
+            "ratio_num_characters_post_title_article_description": 0 if num_characters_article_description == 0 else num_characters_post_title / num_characters_article_description,
+            "ratio_num_characters_post_title_article_keywords": 0 if num_characters_article_keywords == 0 else num_characters_post_title / num_characters_article_keywords,
+            "ratio_num_characters_post_title_article_captions": 0 if num_characters_article_captions == 0 else num_characters_post_title / num_characters_article_captions,
+            "ratio_num_characters_post_title_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_post_title / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_title_article_description": 1,
-            "ratio_num_characters_article_title_article_keywords": 1,
-            "ratio_num_characters_article_title_article_captions": 1,
-            "ratio_num_characters_article_title_article_paragraphs": 1,
+            "ratio_num_characters_article_title_article_description": 0 if num_characters_article_description == 0 else num_characters_article_title / num_characters_article_description,
+            "ratio_num_characters_article_title_article_keywords": 0 if num_characters_article_keywords == 0 else num_characters_article_title / num_characters_article_keywords,
+            "ratio_num_characters_article_title_article_captions": 0 if num_characters_article_captions == 0 else num_characters_article_title / num_characters_article_captions,
+            "ratio_num_characters_article_title_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_title / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_description_article_keywords": 1,
-            "ratio_num_characters_article_description_article_captions": 1,
-            "ratio_num_characters_article_description_article_paragraphs": 1,
+            "ratio_num_characters_article_description_article_keywords": 0 if num_characters_article_keywords == 0 else num_characters_article_description / num_characters_article_keywords,
+            "ratio_num_characters_article_description_article_captions": 0 if num_characters_article_captions == 0 else num_characters_article_description / num_characters_article_captions,
+            "ratio_num_characters_article_description_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_description / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_keywords_article_captions": 1,
-            "ratio_num_characters_article_keywords_article_paragraphs": 1,
+            "ratio_num_characters_article_keywords_article_captions": 0 if num_characters_article_captions == 0 else num_characters_article_keywords / num_characters_article_captions,
+            "ratio_num_characters_article_keywords_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_keywords / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_captions_article_paragraphs": 1,
+            "ratio_num_characters_article_captions_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_captions / num_characters_article_paragraphs,
 
-            "num_common_words_article_keywords_post_title": 1,
-            "num_common_words_article_keywords_article_description": 1,
-            "num_common_words_article_keywords_article_captions": 1,
-            "num_common_words_article_keywords_article_paragraphs": 1,
+            "num_common_words_article_keywords_post_title": 0 if len(item['postText']) == 0 else sum([item['postText'][0].count(x) for x in item['targetKeywords'].split(', ')]),
+            "num_common_words_article_keywords_article_description": 0 if len(item['targetDescription']) == 0 else sum([item['targetDescription'][0].count(x) for x in item['targetKeywords'].split(', ')]),
+            "num_common_words_article_keywords_article_captions": 0 if len(item['targetCaptions']) == 0 else sum([item['targetCaptions'][0].count(x) for x in item['targetKeywords'].split(', ')]),
+            "num_common_words_article_keywords_article_paragraphs": 0 if len(item['targetParagraphs']) == 0 else sum([item['targetParagraphs'][0].count(x) for x in item['targetKeywords'].split(', ')]),
 
-            "num_formal_english_words": 1,
-            "num_informal_english_words": 1,
+            "num_formal_words": num_formal_words,
+            "num_informal_words": total_words - num_formal_words,
 
-            "ratio_formal_words": 1,
-            "ratio_informal_words": 1,
+            "ratio_formal_words": num_formal_words / total_words,
+            "ratio_informal_words": 1 - num_formal_words / total_words,
+
+            "sentiment_post_title": sentiment_post_title,
+            "sentiment_article_title": sentiment_article_title,
+            "sentiment_article_paragraphs": sentiment_article_paragraphs,
+
+            "readability_article_paragraphs": readability_article_paragraphs,
+
+            "starts_with_number_post_title": starts_with_number_post_title,
+            "number_of_dots_post_title": number_of_dots_post_title
         })
     return result
 
