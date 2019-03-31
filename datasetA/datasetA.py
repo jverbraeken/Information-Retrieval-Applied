@@ -154,7 +154,7 @@ def _extract_truth_labels(dataset: List[Dict]) -> List[Dict]:
 
 
 def _extract_and_store_features(name: str, dataset: List[Dict]) -> None:
-    pickle_name = name + "-features.pickle"
+    pickle_name = os.path.join("generated", name + "-features.pickle")
 
     # if os.path.isfile(pickle_name):
     #     with open(pickle_name, 'rb') as f:
@@ -168,7 +168,7 @@ def _extract_and_store_features(name: str, dataset: List[Dict]) -> None:
 
 
 def _extract_and_store_truth_labels(name: str, dataset: List[Dict]) -> None:
-    pickle_name = name + "-truth.pickle"
+    pickle_name = os.path.join("generated", name + "-truth.pickle")
 
     # if os.path.isfile(pickle_name):
     #     with open(pickle_name, 'rb') as f:
@@ -204,8 +204,8 @@ def get_and_store_features() -> None:
 
 def _load_features_truth() -> Tuple[List, List]:
     name = sub_datasets[0]
-    pickle_name_features = name + "-features.pickle"
-    pickle_name_truth = name + "-truth.pickle"
+    pickle_name_features = os.path.join("generated", name + "-features.pickle")
+    pickle_name_truth = os.path.join("generated", name + "-truth.pickle")
     with open(pickle_name_features, 'rb') as f:
         features = pickle.load(f)
     with open(pickle_name_truth, 'rb') as f:
@@ -217,8 +217,6 @@ def _load_features_truth() -> Tuple[List, List]:
 def train_and_test_svc() -> None:
     features, truth = _load_features_truth()
 
-    X_train, X_test, y_train, y_test = train_test_split(features, truth, train_size=0.75, random_state=0)
-
     # tpe_best = fmin(fn=)
     # opt = gp.bayesian_optimisation(SVC(), {
     #     'C': (1e-6, 1e+6, 'log-uniform'),
@@ -227,16 +225,14 @@ def train_and_test_svc() -> None:
     #     'kernel': ['linear', 'poly', 'rbf'],  # categorical parameter
     # },
     #                     n_iter=32)
-    opt = SVC(verbose=True)
-    opt.fit(features, truth)
-    a = 1
-    print("val. score: %s" % opt.best_score_)
-    print("test score: %s" % opt.score(X_test, y_test))
+    clf = SVC(verbose=True)
+    results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
+    print(results['test_score'])
 
 
 def train_and_test_random_forest() -> None:
     features, truth = _load_features_truth()
 
-    clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
-    cv_results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
-    print(cv_results['test_score'])
+    clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, verbose=True)
+    results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
+    print(results['test_score'])

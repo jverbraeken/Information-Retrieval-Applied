@@ -7,11 +7,12 @@ from datasetB import datasetB
 
 
 class Shell(Cmd):
-    def install_dependencies(self, args):
+    def do_install_dependencies(self, _):
+        """Install dependencies for the libraries."""
         download('vader_lexicon')
 
     def do_extract_features(self, args):
-        """Parses the dataset(s), extract the features, and stores them on the disk."""
+        """Parses the dataset(s), extract the features, and stores them on the disk:    extract_features <A or B>"""
         if len(args) == 0:
             for dataset in [datasetA, datasetB]:
                 dataset.get_and_store_features()
@@ -24,11 +25,18 @@ class Shell(Cmd):
             print("Stored features found in dataset B")
 
     def do_train_and_test(self, args):
-        """Trains and tests a classifier on a dataset."""
+        """Trains and tests a classifier on a dataset:    train_and_test <A or B> <svc or random_forest>"""
         if len(args) == 0:
             print("Enter the name of the dataset")
         elif args[0] == "A":
-            datasetA.train_and_test_svc()
+            if args[1] == "svc":
+                datasetA.train_and_test_svc()
+            elif args[1] == "random_forest":
+                datasetA.train_and_test_random_forest()
+
+    def do_quit(self, _):
+        """Quits the program"""
+        return True
 
 
 def main() -> None:
@@ -36,10 +44,6 @@ def main() -> None:
     shell = Shell()
     shell.prompt = "> "
     shell.cmdloop("Starting shell...")
-    #  CLI
-    # clickbaitB, nonclickbaitB = load("datasetB/clickbait_data.jsonl", "datasetB/non_clickbait_data.jsonl")
-    # featuresA1 = datasetA.get_features("featuresA1", instanceA1)
-    # featuresA2 = get_features("featuresA2", instanceA2)
 
 
 if __name__ == "__main__":
