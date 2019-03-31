@@ -7,11 +7,9 @@ from typing import List, Dict, Tuple
 import enchant
 import textstat
 from nltk.sentiment import SentimentIntensityAnalyzer
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split, cross_validate
 from sklearn.svm import SVC
-from hyperopt import fmin
-
-import gp
 
 dictionary = enchant.Dict("en_US")
 sub_datasets = ["datasetA1", "datasetA2"]
@@ -122,7 +120,8 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "num_common_words_article_keywords_post_title": None if len(item['postText']) == 0 else sum(
                 [item['postText'][0].count(x) for x in item['targetKeywords'].split(', ')]),
-            "num_common_words_article_keywords_article_description": None if len(item['targetDescription']) == 0 else sum(
+            "num_common_words_article_keywords_article_description": None if len(
+                item['targetDescription']) == 0 else sum(
                 [item['targetDescription'][0].count(x) for x in item['targetKeywords'].split(', ')]),
             "num_common_words_article_keywords_article_captions": None if len(item['targetCaptions']) == 0 else sum(
                 [item['targetCaptions'][0].count(x) for x in item['targetKeywords'].split(', ')]),
@@ -203,7 +202,7 @@ def get_and_store_features() -> None:
         _extract_and_store_truth_labels(sub_dataset, truth)
 
 
-def train_and_test_svc() -> None:
+def _load_features_truth() -> Tuple[List, List]:
     name = sub_datasets[0]
     pickle_name_features = name + "-features.pickle"
     pickle_name_truth = name + "-truth.pickle"
@@ -212,6 +211,11 @@ def train_and_test_svc() -> None:
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
     features = [[0 if b[1] == None else b[1] for b in a.items()] for a in features]
+    return features, truth
+
+
+def train_and_test_svc() -> None:
+    features, truth = _load_features_truth()
 
     X_train, X_test, y_train, y_test = train_test_split(features, truth, train_size=0.75, random_state=0)
 
@@ -225,5 +229,14 @@ def train_and_test_svc() -> None:
     #                     n_iter=32)
     opt = SVC(verbose=True)
     opt.fit(features, truth)
+    a = 1
     print("val. score: %s" % opt.best_score_)
     print("test score: %s" % opt.score(X_test, y_test))
+
+
+def train_and_test_random_forest() -> None:
+    features, truth = _load_features_truth()
+
+    clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1)
+    cv_results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
+    print(cv_results['test_score'])
