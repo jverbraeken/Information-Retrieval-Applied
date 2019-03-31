@@ -1,0 +1,1 @@
+This folder contains all temporary generated files, mostly pickled Python objects
