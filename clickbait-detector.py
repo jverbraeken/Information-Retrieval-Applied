@@ -1,12 +1,12 @@
 import codecs
 import json
 import requests
-from main import parse
+from main import load
 
 def main():
-    instanceA1, truthA1 = parse("datasetA1/instances.jsonl", "datasetA1/truth.jsonl")
-    instanceA2, truthA2 = parse("datasetA2/instances.jsonl", "datasetA2/truth.jsonl")
-    clickbaitB, nonclickbaitB = parse("datasetB/clickbait_data.jsonl", "datasetB/non_clickbait_data.jsonl")
+    instanceA1, truthA1 = load("datasetA1/instances.jsonl", "datasetA1/truth.jsonl")
+    instanceA2, truthA2 = load("datasetA2/instances.jsonl", "datasetA2/truth.jsonl")
+    clickbaitB, nonclickbaitB = load("datasetB/clickbait_data.jsonl", "datasetB/non_clickbait_data.jsonl")
 
     clickbait_results = clickbaitDetector(clickbaitB)
     print(json.dumps(clickbait_results))
