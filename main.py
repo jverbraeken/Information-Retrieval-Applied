@@ -32,10 +32,25 @@ class Shell(Cmd):
         elif words[0] == "A":
             no_normalization = "--no_normalization" in words
             optimization = "--optimize" in words
+            pca = "--pca" in words
             if words[1] == "svc":
-                datasetA.train_and_test_svc(not no_normalization, optimization)
+                datasetA.train_and_test_svc(not no_normalization, optimization, pca)
             elif words[1] == "random_forest":
-                datasetA.train_and_test_random_forest(not no_normalization, optimization)
+                datasetA.train_and_test_random_forest(not no_normalization, optimization, pca)
+
+    def do_rfe(self, args):
+        words = args.split()
+        if len(words) == 0:
+            print("Enter the name of the dataset")
+        elif words[0] == "A":
+            no_normalization = words[2] == "--no_normalization"
+            if words[1] == "svc":
+                datasetA.svc_RFE(not no_normalization)
+
+    def do_pca(self, args):
+        words = args.split()
+        if words[0] == "A":
+            datasetA.pca()
 
     def do_quit(self, _):
         """Quits the program"""

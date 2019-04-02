@@ -2,7 +2,6 @@ import codecs
 import json
 import requests
 from typing import Dict, List, Tuple
-from main import load
 
 def main():
     instanceA1, truthA1 = load("datasetA1/instances.jsonl", "datasetA1/truth.jsonl")

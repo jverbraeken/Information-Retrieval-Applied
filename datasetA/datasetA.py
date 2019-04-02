@@ -2,15 +2,15 @@ import codecs
 import json
 import os
 import pickle
-from functools import partial
 from typing import List, Dict, Tuple
 
 import enchant
 import textstat
 from hyperopt import hp
 from nltk.sentiment import SentimentIntensityAnalyzer
+from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_validate
+from sklearn.feature_selection import RFE
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
@@ -207,7 +207,7 @@ def get_and_store_features() -> None:
         _extract_and_store_truth_labels(sub_dataset, truth)
 
 
-def _load_features_truth(normalization) -> Tuple[List, List]:
+def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     name = sub_datasets[0]
     pickle_name_features = os.path.join("generated", name + "-features.pickle")
     pickle_name_truth = os.path.join("generated", name + "-truth.pickle")
@@ -216,14 +216,22 @@ def _load_features_truth(normalization) -> Tuple[List, List]:
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
     features = [[0 if b[1] is None else b[1] for b in a.items()] for a in features]
+
     if normalization:
         scaler = StandardScaler().fit(features)
         features = scaler.transform(features).tolist()
+
+    if pca:
+        pca_model = PCA(n_components=0.99, svd_solver='full')
+        features = pca_model.fit_transform(features)
+        print(pca_model.explained_variance_ratio_)
+        print(pca_model.singular_values_)
+
     return features, truth
 
 
-def train_and_test_svc(normalization, optimization) -> None:
-    features, truth = _load_features_truth(normalization)
+def train_and_test_svc(normalization, optimization, pca) -> None:
+    features, truth = _load_features_truth(normalization, pca)
 
     clf = SVC(verbose=True)
     if optimization:
@@ -235,8 +243,18 @@ def train_and_test_svc(normalization, optimization) -> None:
         ml_util.evaluate(clf, features, truth)
 
 
-def train_and_test_random_forest(normalization, optimize) -> None:
-    features, truth = _load_features_truth(normalization)
+def svc_RFE(normalization) -> None:
+    features, truth = _load_features_truth(normalization, False)
+    svc = SVC(verbose=True, kernel="linear", C=1)
+    rfe = RFE(estimator=svc, n_features_to_select=100, step=100)
+    rfe.fit(features, truth)
+    ranking = rfe.ranking_
+    print(ranking)
+    # ranking = rfe.ranking_.reshape(digits.images[0].shape)
+
+
+def train_and_test_random_forest(normalization, optimize, pca) -> None:
+    features, truth = _load_features_truth(normalization, pca)
 
     clf = RandomForestClassifier(verbose=True)
     if optimize:
