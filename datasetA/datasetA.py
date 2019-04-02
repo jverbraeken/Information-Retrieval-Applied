@@ -11,6 +11,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
@@ -18,6 +19,7 @@ import ml_util
 
 dictionary = enchant.Dict("en_US")
 sub_datasets = ["datasetA1", "datasetA2"]
+sentiment_analyzer = SentimentIntensityAnalyzer()
 
 
 def _parse_json(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
@@ -46,7 +48,6 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             [0 if x == "" else dictionary.check(x) for y in item['targetParagraphs'] for x in y.split(' ')])
         total_words = len([x for y in item['targetParagraphs'] for x in y.split(' ')])
 
-        sentiment_analyzer = SentimentIntensityAnalyzer()
         sentiment_post_title = sentiment_analyzer.polarity_scores(item['postText'][0])['compound']
         sentiment_article_title = sentiment_analyzer.polarity_scores(item['targetTitle'][0])['compound']
         sentiment_article_paragraphs = sum(
@@ -146,7 +147,7 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             "readability_article_paragraphs": readability_article_paragraphs,
 
             "starts_with_number_post_title": starts_with_number_post_title,
-            "number_of_dots_post_title": number_of_dots_post_title
+            "number_of_dots_post_title": number_of_dots_post_title,
         })
     return result
 
@@ -265,5 +266,20 @@ def train_and_test_random_forest(normalization, optimize, pca) -> None:
             "min_samples_split": hp.quniform("min_samples_split", 2, 10, 1),
         }
         ml_util.optimize(space, clf, features, truth, ["n_estimators", "max_depth", "min_samples_split"])
+    else:
+        ml_util.evaluate(clf, features, truth)
+
+
+def train_and_test_knn(normalization, optimize, pca) -> None:
+    features, truth = _load_features_truth(normalization, pca)
+
+    clf = KNeighborsClassifier()
+    if optimize:
+        space = {
+            "n_neighbors": hp.quniform("n_neighbors", 1, 10, 1),
+            "p": hp.quniform("p", 1, 3, 1),
+            "n_jobs": hp.quniform("n_jobs", -1, -1, 1),
+        }
+        ml_util.optimize(space, clf, features, truth, ["n_neighbors", "p", "n_jobs"], max_evals=30)
     else:
         ml_util.evaluate(clf, features, truth)

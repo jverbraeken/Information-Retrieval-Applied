@@ -6,6 +6,12 @@ from datasetA import datasetA
 from datasetB import datasetB
 
 
+train_and_test_methods = {
+    "svc": lambda normalization, optimization, pca: datasetA.train_and_test_svc(normalization, optimization, pca),
+    "random_forest": lambda normalization, optimization, pca: datasetA.train_and_test_random_forest(normalization, optimization, pca),
+    "knn": lambda normalization, optimization, pca: datasetA.train_and_test_knn(normalization, optimization, pca),
+}
+
 class Shell(Cmd):
     def do_install_dependencies(self, _):
         """Install dependencies for the libraries."""
@@ -33,10 +39,7 @@ class Shell(Cmd):
             no_normalization = "--no_normalization" in words
             optimization = "--optimize" in words
             pca = "--pca" in words
-            if words[1] == "svc":
-                datasetA.train_and_test_svc(not no_normalization, optimization, pca)
-            elif words[1] == "random_forest":
-                datasetA.train_and_test_random_forest(not no_normalization, optimization, pca)
+            train_and_test_methods[words[1]](not no_normalization, optimization, pca)
 
     def do_rfe(self, args):
         words = args.split()
