@@ -5,17 +5,19 @@ from nltk import download
 from datasetA import datasetA
 from datasetB import datasetB
 
-
 train_and_test_methods = {
     "svc": lambda normalization, optimization, pca: datasetA.train_and_test_svc(normalization, optimization, pca),
-    "random_forest": lambda normalization, optimization, pca: datasetA.train_and_test_random_forest(normalization, optimization, pca),
+    "random_forest": lambda normalization, optimization, pca: datasetA.train_and_test_random_forest(normalization,
+                                                                                                    optimization, pca),
     "knn": lambda normalization, optimization, pca: datasetA.train_and_test_knn(normalization, optimization, pca),
 }
+
 
 class Shell(Cmd):
     def do_install_dependencies(self, _):
         """Install dependencies for the libraries."""
         download('vader_lexicon')
+        download('averaged_perceptron_tagger')
 
     def do_extract_features(self, args):
         """Parses the dataset(s), extract the features, and stores them on the disk:    extract_features <A or B>"""

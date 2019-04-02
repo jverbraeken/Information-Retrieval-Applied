@@ -5,6 +5,7 @@ import pickle
 from typing import List, Dict, Tuple
 
 import enchant
+import nltk
 import textstat
 from hyperopt import hp
 from nltk.sentiment import SentimentIntensityAnalyzer
@@ -60,6 +61,8 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
         starts_with_number_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0][0].isdigit()
         number_of_dots_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0][0].count('.')
+
+        first_title_word = item['targetTitle'].split()[0].lower()
 
         result.append({
             "num_characters_post_title": num_characters_post_title,
@@ -148,6 +151,11 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "starts_with_number_post_title": starts_with_number_post_title,
             "number_of_dots_post_title": number_of_dots_post_title,
+
+            "has_demonstratives": first_title_word in {"this", "that", "these", "those"},
+            "has_third_pronoun": first_title_word in {"he", "she", "it", "his", "her", "its", "him"},
+            "has_definitive": first_title_word in {"the", "a", "an"},
+            "is_start_adverb": nltk.pos_tag(first_title_word)[0][1] == "RB",
         })
     return result
 
