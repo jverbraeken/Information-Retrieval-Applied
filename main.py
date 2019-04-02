@@ -29,9 +29,10 @@ class Shell(Cmd):
         if len(args) == 0:
             print("Enter the name of the dataset")
         elif args[0] == "A":
-            if args[1] == "svc":
+            word = args.split()[1]
+            if word == "svc":
                 datasetA.train_and_test_svc()
-            elif args[1] == "random_forest":
+            elif word == "random_forest":
                 datasetA.train_and_test_random_forest()
 
     def do_quit(self, _):
