@@ -4,6 +4,10 @@ import os
 import pickle
 from timeit import default_timer as timer
 from typing import List, Dict, Tuple
+from hyperopt import fmin
+from sklearn.feature_selection import RFE
+import matplotlib.pyplot as plt
+
 
 import enchant
 import textstat
@@ -11,6 +15,7 @@ from hyperopt import fmin, tpe, Trials, STATUS_OK
 from hyperopt import hp
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.decomposition import PCA
 from sklearn.model_selection import cross_validate
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -227,6 +232,22 @@ def train_and_test_svc(normalization) -> None:
     clf = SVC(verbose=True)
     results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
     print(results['test_score'])
+
+def svc_RFE(normalization) -> None:
+    features, truth = _load_features_truth(normalization)
+    svc = SVC(verbose=True, kernel="linear", C=1)
+    rfe = RFE(estimator=svc, n_features_to_select=100, step=100)
+    rfe.fit(features, truth)
+    ranking = rfe.ranking_
+    print(ranking)
+    # ranking = rfe.ranking_.reshape(digits.images[0].shape)
+
+def pca() -> None:
+    features, truth = _load_features_truth(True)
+    model= PCA(n_components=0.99, svd_solver='full')
+    model.fit_transform(features)
+    print(model.explained_variance_ratio_)
+    print(model.singular_values_)
 
 
 def train_and_test_random_forest(normalization) -> None:
