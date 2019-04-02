@@ -2,18 +2,19 @@ import codecs
 import json
 import os
 import pickle
-from timeit import default_timer as timer
+from functools import partial
 from typing import List, Dict, Tuple
 
 import enchant
 import textstat
-from hyperopt import fmin, tpe, Trials, STATUS_OK
 from hyperopt import hp
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_validate
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+
+import ml_util
 
 dictionary = enchant.Dict("en_US")
 sub_datasets = ["datasetA1", "datasetA2"]
@@ -221,37 +222,30 @@ def _load_features_truth(normalization) -> Tuple[List, List]:
     return features, truth
 
 
-def train_and_test_svc(normalization) -> None:
+def train_and_test_svc(normalization, optimization) -> None:
     features, truth = _load_features_truth(normalization)
 
     clf = SVC(verbose=True)
-    results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
-    print(results['test_score'])
+    if optimization:
+        space = {
+            "gamma": hp.uniform("gamma", 0.0001, 1.0),
+        }
+        ml_util.optimize(space, clf, features, truth, [], max_evals=20)
+    else:
+        ml_util.evaluate(clf, features, truth)
 
 
-def train_and_test_random_forest(normalization) -> None:
-    def objective(params):
-        global ITERATION
-        ITERATION += 1
-
-        start = timer()
-        results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
-        run_time = timer() - start
-        best_score = max(results["test_score"])
-        loss = 1 - best_score
-        return {"loss": loss, "status": STATUS_OK, "train_time": run_time, "iteration": ITERATION, "params": params}
-
-    global ITERATION
-    ITERATION = 0
+def train_and_test_random_forest(normalization, optimize) -> None:
     features, truth = _load_features_truth(normalization)
 
-    clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, verbose=True)
-    space = {
-        "max_depth": hp.quniform("max_depth", 1, 8, 1),
-        "n_estimators": hp.quniform("n_estimators", 1, 20, 1),
-        "max_features": hp.quniform("max_features", 1, 20, 1),
-    }
-    bayes_trials = Trials()
-    best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=500, trials=bayes_trials)
-    bayes_trials_results = sorted(bayes_trials.results, key=lambda x: x['loss'])
-    print(1 - bayes_trials_results[0]["loss"])
+    clf = RandomForestClassifier(verbose=True)
+    if optimize:
+        space = {
+            "n_estimators": hp.quniform("n_estimators", 1, 20, 1),
+            "criterion": hp.choice("criterion", ["gini", "entropy"]),
+            "max_depth": hp.quniform("max_depth", 1, 8, 1),
+            "min_samples_split": hp.quniform("min_samples_split", 2, 10, 1),
+        }
+        ml_util.optimize(space, clf, features, truth, ["n_estimators", "max_depth", "min_samples_split"])
+    else:
+        ml_util.evaluate(clf, features, truth)
