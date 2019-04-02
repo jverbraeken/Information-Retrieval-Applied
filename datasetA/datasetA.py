@@ -3,13 +3,14 @@ import json
 import os
 import pickle
 from typing import List, Dict, Tuple
-from hyperopt import fmin
 
 import enchant
 import textstat
+from hyperopt import fmin, tpe, Trials
+from hyperopt import hp
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, cross_validate
+from sklearn.model_selection import cross_validate
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
@@ -228,8 +229,24 @@ def train_and_test_svc(normalization) -> None:
 
 
 def train_and_test_random_forest(normalization) -> None:
+    def objective(params):
+        global ITERATION
+        ITERATION += 1
+
+        start = timer()
+        cross_validate(clf, features, truth, cv=5, return_train_score=False)
+
     features, truth = _load_features_truth(normalization)
 
     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, verbose=True)
-    results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
-    print(results['test_score'])
+    space = {
+        "max_depth": hp.quniform("max_depth", 1, 8, 1),
+        "n_estimators": hp.quniform("n_estimators", 1, 20, 1),
+        "max_features": hp.quniform("max_features", 1, 20, 1),
+    }
+    bayes_trials = Trials()
+    best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=500, trials=bayes_trials)
+    bayes_trials_results = sorted(bayes_trials.results, key=lambda x: x['loss'])
+    print(bayes_trials_results)
+    # results =
+    print(best)

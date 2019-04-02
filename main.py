@@ -30,7 +30,7 @@ class Shell(Cmd):
         if len(words) == 0:
             print("Enter the name of the dataset")
         elif words[0] == "A":
-            no_normalization = words[2] == "--no_normalization"
+            no_normalization = False if len(words) <= 2 else words[2] == "--no_normalization"
             if words[1] == "svc":
                 datasetA.train_and_test_svc(not no_normalization)
             elif words[1] == "random_forest":
