@@ -2,11 +2,12 @@ import codecs
 import json
 import os
 import pickle
+from timeit import default_timer as timer
 from typing import List, Dict, Tuple
 
 import enchant
 import textstat
-from hyperopt import fmin, tpe, Trials
+from hyperopt import fmin, tpe, Trials, STATUS_OK
 from hyperopt import hp
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.ensemble import RandomForestClassifier
@@ -234,8 +235,14 @@ def train_and_test_random_forest(normalization) -> None:
         ITERATION += 1
 
         start = timer()
-        cross_validate(clf, features, truth, cv=5, return_train_score=False)
+        results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
+        run_time = timer() - start
+        best_score = max(results["test_score"])
+        loss = 1 - best_score
+        return {"loss": loss, "status": STATUS_OK, "train_time": run_time, "iteration": ITERATION, "params": params}
 
+    global ITERATION
+    ITERATION = 0
     features, truth = _load_features_truth(normalization)
 
     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, verbose=True)
@@ -247,6 +254,4 @@ def train_and_test_random_forest(normalization) -> None:
     bayes_trials = Trials()
     best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=500, trials=bayes_trials)
     bayes_trials_results = sorted(bayes_trials.results, key=lambda x: x['loss'])
-    print(bayes_trials_results)
-    # results =
-    print(best)
+    print(1 - bayes_trials_results[0]["loss"])
