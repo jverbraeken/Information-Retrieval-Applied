@@ -10,6 +10,7 @@ import textstat
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, cross_validate
+from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 
 dictionary = enchant.Dict("en_US")
@@ -203,7 +204,7 @@ def get_and_store_features() -> None:
         _extract_and_store_truth_labels(sub_dataset, truth)
 
 
-def _load_features_truth() -> Tuple[List, List]:
+def _load_features_truth(normalization) -> Tuple[List, List]:
     name = sub_datasets[0]
     pickle_name_features = os.path.join("generated", name + "-features.pickle")
     pickle_name_truth = os.path.join("generated", name + "-truth.pickle")
@@ -211,28 +212,23 @@ def _load_features_truth() -> Tuple[List, List]:
         features = pickle.load(f)
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
-    features = [[0 if b[1] == None else b[1] for b in a.items()] for a in features]
+    features = [[0 if b[1] is None else b[1] for b in a.items()] for a in features]
+    if normalization:
+        scaler = StandardScaler().fit(features)
+        features = scaler.transform(features).tolist()
     return features, truth
 
 
-def train_and_test_svc() -> None:
-    features, truth = _load_features_truth()
+def train_and_test_svc(normalization) -> None:
+    features, truth = _load_features_truth(normalization)
 
-    # tpe_best = fmin(fn=)
-    # opt = gp.bayesian_optimisation(SVC(), {
-    #     'C': (1e-6, 1e+6, 'log-uniform'),
-    #     'gamma': (1e-6, 1e+1, 'log-uniform'),
-    #     'degree': (1, 8),  # integer valued parameter
-    #     'kernel': ['linear', 'poly', 'rbf'],  # categorical parameter
-    # },
-    #                     n_iter=32)
     clf = SVC(verbose=True)
     results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
     print(results['test_score'])
 
 
-def train_and_test_random_forest() -> None:
-    features, truth = _load_features_truth()
+def train_and_test_random_forest(normalization) -> None:
+    features, truth = _load_features_truth(normalization)
 
     clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1, verbose=True)
     results = cross_validate(clf, features, truth, cv=5, return_train_score=False)

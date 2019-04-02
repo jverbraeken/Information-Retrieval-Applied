@@ -26,14 +26,15 @@ class Shell(Cmd):
 
     def do_train_and_test(self, args):
         """Trains and tests a classifier on a dataset:    train_and_test <A or B> <svc or random_forest>"""
-        if len(args) == 0:
+        words = args.split()
+        if len(words) == 0:
             print("Enter the name of the dataset")
-        elif args[0] == "A":
-            word = args.split()[1]
-            if word == "svc":
-                datasetA.train_and_test_svc()
-            elif word == "random_forest":
-                datasetA.train_and_test_random_forest()
+        elif words[0] == "A":
+            no_normalization = words[2] == "--no_normalization"
+            if words[1] == "svc":
+                datasetA.train_and_test_svc(not no_normalization)
+            elif words[1] == "random_forest":
+                datasetA.train_and_test_random_forest(not no_normalization)
 
     def do_quit(self, _):
         """Quits the program"""
