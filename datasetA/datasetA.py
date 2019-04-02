@@ -21,6 +21,8 @@ import ml_util
 dictionary = enchant.Dict("en_US")
 sub_datasets = ["datasetA1", "datasetA2"]
 sentiment_analyzer = SentimentIntensityAnalyzer()
+with open("contractions.txt", 'r') as file:
+    contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
 
 
 def _parse_json(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
@@ -39,9 +41,9 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
     for i, item in enumerate(dataset):
         print(str(float(i) * 100 / float(len(dataset))) + "%")
         num_characters_post_title = sum([len(x) for x in item['postText']])
-        num_characters_article_title = sum([len(x) for x in item['targetTitle']])
-        num_characters_article_description = sum([len(x) for x in item['targetDescription']])
-        num_characters_article_keywords = sum([len(x) for x in item['targetKeywords']])
+        num_characters_article_title = len(item['targetTitle'])
+        num_characters_article_description = len(item['targetDescription'])
+        num_characters_article_keywords = len(item['targetKeywords'])
         num_characters_article_captions = sum([len(x) for x in item['targetCaptions']])
         num_characters_article_paragraphs = sum([len(x) for x in item['targetParagraphs']])
 
@@ -156,6 +158,8 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             "has_third_pronoun": first_title_word in {"he", "she", "it", "his", "her", "its", "him"},
             "has_definitive": first_title_word in {"the", "a", "an"},
             "is_start_adverb": nltk.pos_tag(first_title_word)[0][1] == "RB",
+
+            "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split())))
         })
     return result
 
