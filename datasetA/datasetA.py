@@ -20,9 +20,6 @@ import ml_util
 
 dictionary = enchant.Dict("en_US")
 sub_datasets = ["datasetA1", "datasetA2"]
-sentiment_analyzer = SentimentIntensityAnalyzer()
-with open("contractions.txt", 'r') as file:
-    contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
 
 
 def _parse_json(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
@@ -36,10 +33,14 @@ def _parse_json(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
 
 
 def _extract_features(dataset: List[Dict]) -> List[Dict]:
+    sentiment_analyzer = SentimentIntensityAnalyzer()
+    with open("contractions.txt", 'r') as file:
+        contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
     result = []
 
     for i, item in enumerate(dataset):
-        print(str(float(i) * 100 / float(len(dataset))) + "%")
+        if i % 50 == 0:
+            print(str(float(i) * 100 / float(len(dataset))) + "%")
         num_characters_post_title = sum([len(x) for x in item['postText']])
         num_characters_article_title = len(item['targetTitle'])
         num_characters_article_description = len(item['targetDescription'])
@@ -173,6 +174,7 @@ def _extract_truth_labels(dataset: List[Dict]) -> List[Dict]:
 
 def _extract_and_store_features(name: str, dataset: List[Dict]) -> None:
     pickle_name = os.path.join("generated", name + "-features.pickle")
+    print(pickle_name)
 
     # if os.path.isfile(pickle_name):
     #     with open(pickle_name, 'rb') as f:
@@ -187,7 +189,7 @@ def _extract_and_store_features(name: str, dataset: List[Dict]) -> None:
 
 def _extract_and_store_truth_labels(name: str, dataset: List[Dict]) -> None:
     pickle_name = os.path.join("generated", name + "-truth.pickle")
-
+    print(pickle_name)
     # if os.path.isfile(pickle_name):
     #     with open(pickle_name, 'rb') as f:
     #         result = pickle.load(f)
@@ -211,9 +213,9 @@ def get_and_store_features() -> None:
 
     i = 0
     for sub_dataset, instance in zip(sub_datasets, instances):
-        if i == 0:
-            i = 1
-            continue
+        # if i == 0:
+        #     i = 1
+        #     continue
         _extract_and_store_features(sub_dataset, instance)
 
     for sub_dataset, truth in zip(sub_datasets, truths):
@@ -229,6 +231,13 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
     features = [[0 if b[1] is None else b[1] for b in a.items()] for a in features]
+
+    for k in reversed(range(len(truth))):
+        if sum(truth)*2>=len(truth):
+            break
+        if not truth[k]:
+            del truth[k]
+            del features[k]
 
     if normalization:
         scaler = StandardScaler().fit(features)
