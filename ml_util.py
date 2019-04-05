@@ -11,7 +11,7 @@ def objective(clf, features, truth, int_variables, params):
     for variable in int_variables:
         params[variable] = int(params[variable])
     clf.set_params(**params)
-    results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
+    results = cross_validate(clf, features, truth, cv=5, return_train_score=False, n_jobs=-1)
     run_time = timer() - start
     best_score = max(results["test_score"])
     loss = 1 - best_score
@@ -19,7 +19,8 @@ def objective(clf, features, truth, int_variables, params):
 
 
 def evaluate(clf, features, truth):
-    results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
+    results = cross_validate(clf, features, truth, cv=5)
+    print(results['train_score'])
     print(results['test_score'])
 
 

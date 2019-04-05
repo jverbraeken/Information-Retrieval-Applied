@@ -260,13 +260,14 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
     X_train, X_test, y_train, y_test = train_test_split(features, truth, test_size=0.2)
     clf.fit(X_train, y_train)
     print(clf.score(X_test, y_test))
-    # if optimization:
-    #     space = {
-    #         "gamma": hp.uniform("gamma", 0.0001, 1.0),
-    #     }
-    #     ml_util.optimize(space, clf, features, truth, [], max_evals=20)
-    # else:
-    #     ml_util.evaluate(clf, features, truth)
+    if optimization:
+        space = {
+            "gamma": hp.uniform("gamma", 0.0001, 10.0),
+            "C": hp.uniform("C", 0.01, 10.0),
+        }
+        ml_util.optimize(space, clf, features, truth, [], max_evals=100)
+    else:
+        ml_util.evaluate(clf, features, truth)
 
 
 def svc_RFE(normalization) -> None:
