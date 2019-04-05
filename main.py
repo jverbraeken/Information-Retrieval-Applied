@@ -29,7 +29,7 @@ class Shell(Cmd):
             datasetA.get_and_store_features()
             print("Stored features found in dataset A")
         elif args[0] == "B":
-            datasetB.process()
+            datasetB.get_and_store_features()
             print("Stored features found in dataset B")
 
     def do_train_and_test(self, args):
