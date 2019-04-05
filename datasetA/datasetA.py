@@ -12,6 +12,7 @@ from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE
+from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
@@ -19,7 +20,7 @@ from sklearn.svm import SVC
 import ml_util
 
 dictionary = enchant.Dict("en_US")
-sub_datasets = ["datasetA1", "datasetA2"]
+sub_datasets = ["datasetA1"]
 sentiment_analyzer = SentimentIntensityAnalyzer()
 with open("contractions.txt", 'r') as file:
     contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
@@ -159,7 +160,7 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             "has_definitive": first_title_word in {"the", "a", "an"},
             "is_start_adverb": nltk.pos_tag(first_title_word)[0][1] == "RB",
 
-            "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split())))
+            "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split()))),
         })
     return result
 
@@ -209,11 +210,7 @@ def get_and_store_features() -> None:
         instances.append(instance)
         truths.append(truth)
 
-    i = 0
     for sub_dataset, instance in zip(sub_datasets, instances):
-        if i == 0:
-            i = 1
-            continue
         _extract_and_store_features(sub_dataset, instance)
 
     for sub_dataset, truth in zip(sub_datasets, truths):
@@ -229,6 +226,13 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
     features = [[0 if b[1] is None else b[1] for b in a.items()] for a in features]
+
+    for k in reversed(range(len(truth))):
+        if sum(truth) * 2 >= len(truth):
+            break
+        if not truth[k]:
+            del truth[k]
+            del features[k]
 
     if normalization:
         scaler = StandardScaler().fit(features)
@@ -247,13 +251,16 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
 
     clf = SVC(verbose=True)
-    if optimization:
-        space = {
-            "gamma": hp.uniform("gamma", 0.0001, 1.0),
-        }
-        ml_util.optimize(space, clf, features, truth, [], max_evals=20)
-    else:
-        ml_util.evaluate(clf, features, truth)
+    X_train, X_test, y_train, y_test = train_test_split(features, truth, test_size=0.2)
+    clf.fit(X_train, y_train)
+    print(clf.score(X_test, y_test))
+    # if optimization:
+    #     space = {
+    #         "gamma": hp.uniform("gamma", 0.0001, 1.0),
+    #     }
+    #     ml_util.optimize(space, clf, features, truth, [], max_evals=20)
+    # else:
+    #     ml_util.evaluate(clf, features, truth)
 
 
 def svc_RFE(normalization) -> None:
