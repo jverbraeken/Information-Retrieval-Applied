@@ -5,11 +5,18 @@ from nltk import download
 from datasetA import datasetA
 from datasetB import datasetB
 
-train_and_test_methods = {
+train_and_test_methods_A = {
     "svc": lambda normalization, optimization, pca: datasetA.train_and_test_svc(normalization, optimization, pca),
     "random_forest": lambda normalization, optimization, pca: datasetA.train_and_test_random_forest(normalization,
                                                                                                     optimization, pca),
     "knn": lambda normalization, optimization, pca: datasetA.train_and_test_knn(normalization, optimization, pca),
+}
+
+train_and_test_methods_B = {
+    # "svc": lambda normalization, optimization, pca: datasetA.train_and_test_svc(normalization, optimization, pca),
+    "random_forest": lambda normalization, optimization, pca: datasetB.train_and_test_random_forest(normalization,
+                                                                                                    optimization, pca),
+    # "knn": lambda normalization, optimization, pca: datasetA.train_and_test_knn(normalization, optimization, pca),
 }
 
 
@@ -41,7 +48,12 @@ class Shell(Cmd):
             no_normalization = "--no_normalization" in words
             optimization = "--optimize" in words
             pca = "--pca" in words
-            train_and_test_methods[words[1]](not no_normalization, optimization, pca)
+            train_and_test_methods_A[words[1]](not no_normalization, optimization, pca)
+        elif words[0] == "B":
+            no_normalization = "--no_normalization" in words
+            optimization = "--optimize" in words
+            pca = "--pca" in words
+            train_and_test_methods_B[words[1]](not no_normalization, optimization, pca)
 
     def do_rfe(self, args):
         words = args.split()

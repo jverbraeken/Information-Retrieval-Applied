@@ -181,13 +181,13 @@ def _extract_and_store_features(name: str, dataset: List[Dict]) -> None:
     pickle_name = os.path.join("generated", name + "-features.pickle")
     print(pickle_name)
 
-    # if os.path.isfile(pickle_name):
-    #     with open(pickle_name, 'rb') as f:
-    #         result = pickle.load(f)
-    # else:
-    result = _extract_features(dataset)
-    with open(pickle_name, 'wb') as f:
-        pickle.dump(result, f)
+    if os.path.isfile(pickle_name):
+        with open(pickle_name, 'rb') as f:
+            result = pickle.load(f)
+    else:
+        result = _extract_features(dataset)
+        with open(pickle_name, 'wb') as f:
+            pickle.dump(result, f)
 
     # return result
 
@@ -195,13 +195,13 @@ def _extract_and_store_features(name: str, dataset: List[Dict]) -> None:
 def _extract_and_store_truth_labels(name: str, dataset: List[Dict]) -> None:
     pickle_name = os.path.join("generated", name + "-truth.pickle")
     print(pickle_name)
-    # if os.path.isfile(pickle_name):
-    #     with open(pickle_name, 'rb') as f:
-    #         result = pickle.load(f)
-    # else:
-    result = _extract_truth_labels(dataset)
-    with open(pickle_name, 'wb') as f:
-        pickle.dump(result, f)
+    if os.path.isfile(pickle_name):
+        with open(pickle_name, 'rb') as f:
+            result = pickle.load(f)
+    else:
+        result = _extract_truth_labels(dataset)
+        with open(pickle_name, 'wb') as f:
+            pickle.dump(result, f)
 
     # return result
 
