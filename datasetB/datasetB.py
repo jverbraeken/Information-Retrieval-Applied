@@ -34,10 +34,10 @@ def _extract_features(dataset: List[str]) -> List[Dict]:
 
         sentiment = sentiment_analyzer.polarity_scores(item)['compound']
 
-        starts_with_number = item[0].isdigit()
-        number_of_dots = item[0].count('.')
+        starts_with_number = 0 if len(item) == 0 else item[0].isdigit()
+        number_of_dots = 0 if len(item) == 0 else item[0].count('.')
 
-        first_title_word = item.split()[0].lower()
+        first_title_word = "" if len(item) == 0 else item.split()[0].lower()
 
         result.append({
             "num_characters": num_characters,
@@ -56,7 +56,7 @@ def _extract_features(dataset: List[str]) -> List[Dict]:
             "has_demonstratives": first_title_word in {"this", "that", "these", "those"},
             "has_third_pronoun": first_title_word in {"he", "she", "it", "his", "her", "its", "him"},
             "has_definitive": first_title_word in {"the", "a", "an"},
-            "is_start_adverb": nltk.pos_tag(first_title_word)[0][1] == "RB",
+            "is_start_adverb": False if first_title_word == "" else nltk.pos_tag(first_title_word)[0][1] == "RB",
 
             "num_contractions": len(list(filter(lambda x: x in contractions, item.split()))),
         })
