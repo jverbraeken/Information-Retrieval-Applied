@@ -241,14 +241,11 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
 
-    print(features[0])
     features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a in features]
-    print(features[0])
 
     if normalization:
         scaler = StandardScaler().fit(features)
         features = scaler.transform(features).tolist()
-        print(features[0])
 
     if pca:
         pca_model = PCA(n_components=0.99, svd_solver='full')
@@ -262,7 +259,7 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
 def train_and_test_svc(normalization, optimization, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
 
-    clf = SVC(verbose=True)
+    clf = SVC(verbose=True, gamma='scale')
     X_train, X_test, y_train, y_test = train_test_split(features, truth, test_size=0.2)
     clf.fit(X_train, y_train)
     print(clf.score(X_test, y_test))
