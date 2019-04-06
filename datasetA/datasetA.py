@@ -115,41 +115,41 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             "diff_num_characters_article_captions_article_paragraphs": abs(
                 num_characters_article_captions - num_characters_article_paragraphs),
 
-            "ratio_num_characters_post_title_article_title": None if num_characters_article_title == 0 else num_characters_post_title / num_characters_article_title,
-            "ratio_num_characters_post_title_article_description": None if num_characters_article_description == 0 else num_characters_post_title / num_characters_article_description,
-            "ratio_num_characters_post_title_article_keywords": None if num_characters_article_keywords == 0 else num_characters_post_title / num_characters_article_keywords,
-            "ratio_num_characters_post_title_article_captions": None if num_characters_article_captions == 0 else num_characters_post_title / num_characters_article_captions,
-            "ratio_num_characters_post_title_article_paragraphs": None if num_characters_article_paragraphs == 0 else num_characters_post_title / num_characters_article_paragraphs,
+            "ratio_num_characters_post_title_article_title": 0 if num_characters_article_title == 0 else num_characters_post_title / num_characters_article_title,
+            "ratio_num_characters_post_title_article_description": 0 if num_characters_article_description == 0 else num_characters_post_title / num_characters_article_description,
+            "ratio_num_characters_post_title_article_keywords": 0 if num_characters_article_keywords == 0 else num_characters_post_title / num_characters_article_keywords,
+            "ratio_num_characters_post_title_article_captions": 0 if num_characters_article_captions == 0 else num_characters_post_title / num_characters_article_captions,
+            "ratio_num_characters_post_title_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_post_title / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_title_article_description": None if num_characters_article_description == 0 else num_characters_article_title / num_characters_article_description,
-            "ratio_num_characters_article_title_article_keywords": None if num_characters_article_keywords == 0 else num_characters_article_title / num_characters_article_keywords,
-            "ratio_num_characters_article_title_article_captions": None if num_characters_article_captions == 0 else num_characters_article_title / num_characters_article_captions,
-            "ratio_num_characters_article_title_article_paragraphs": None if num_characters_article_paragraphs == 0 else num_characters_article_title / num_characters_article_paragraphs,
+            "ratio_num_characters_article_title_article_description": 0 if num_characters_article_description == 0 else num_characters_article_title / num_characters_article_description,
+            "ratio_num_characters_article_title_article_keywords": 0 if num_characters_article_keywords == 0 else num_characters_article_title / num_characters_article_keywords,
+            "ratio_num_characters_article_title_article_captions": 0 if num_characters_article_captions == 0 else num_characters_article_title / num_characters_article_captions,
+            "ratio_num_characters_article_title_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_title / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_description_article_keywords": None if num_characters_article_keywords == 0 else num_characters_article_description / num_characters_article_keywords,
-            "ratio_num_characters_article_description_article_captions": None if num_characters_article_captions == 0 else num_characters_article_description / num_characters_article_captions,
-            "ratio_num_characters_article_description_article_paragraphs": None if num_characters_article_paragraphs == 0 else num_characters_article_description / num_characters_article_paragraphs,
+            "ratio_num_characters_article_description_article_keywords": 0 if num_characters_article_keywords == 0 else num_characters_article_description / num_characters_article_keywords,
+            "ratio_num_characters_article_description_article_captions": 0 if num_characters_article_captions == 0 else num_characters_article_description / num_characters_article_captions,
+            "ratio_num_characters_article_description_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_description / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_keywords_article_captions": None if num_characters_article_captions == 0 else num_characters_article_keywords / num_characters_article_captions,
-            "ratio_num_characters_article_keywords_article_paragraphs": None if num_characters_article_paragraphs == 0 else num_characters_article_keywords / num_characters_article_paragraphs,
+            "ratio_num_characters_article_keywords_article_captions": 0 if num_characters_article_captions == 0 else num_characters_article_keywords / num_characters_article_captions,
+            "ratio_num_characters_article_keywords_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_keywords / num_characters_article_paragraphs,
 
-            "ratio_num_characters_article_captions_article_paragraphs": None if num_characters_article_paragraphs == 0 else num_characters_article_captions / num_characters_article_paragraphs,
+            "ratio_num_characters_article_captions_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_captions / num_characters_article_paragraphs,
 
-            "num_common_words_article_keywords_post_title": None if len(item['postText']) == 0 else sum(
+            "num_common_words_article_keywords_post_title": 0 if len(item['postText']) == 0 else sum(
                 [item['postText'][0].count(x) for x in item['targetKeywords'].split(', ')]),
-            "num_common_words_article_keywords_article_description": None if len(
+            "num_common_words_article_keywords_article_description": 0 if len(
                 item['targetDescription']) == 0 else sum(
                 [item['targetDescription'][0].count(x) for x in item['targetKeywords'].split(', ')]),
-            "num_common_words_article_keywords_article_captions": None if len(item['targetCaptions']) == 0 else sum(
+            "num_common_words_article_keywords_article_captions": 0 if len(item['targetCaptions']) == 0 else sum(
                 [item['targetCaptions'][0].count(x) for x in item['targetKeywords'].split(', ')]),
-            "num_common_words_article_keywords_article_paragraphs": None if len(item['targetParagraphs']) == 0 else sum(
+            "num_common_words_article_keywords_article_paragraphs": 0 if len(item['targetParagraphs']) == 0 else sum(
                 [item['targetParagraphs'][0].count(x) for x in item['targetKeywords'].split(', ')]),
 
             "num_formal_words": num_formal_words,
             "num_informal_words": total_words - num_formal_words,
 
-            "ratio_formal_words": None if total_words == 0 else num_formal_words / total_words,
-            "ratio_informal_words": None if total_words == 0 else 1 - num_formal_words / total_words,
+            "ratio_formal_words": 0 if total_words == 0 else num_formal_words / total_words,
+            "ratio_informal_words": 0 if total_words == 0 else 1 - num_formal_words / total_words,
 
             "sentiment_post_title": sentiment_post_title,
             "sentiment_article_title": sentiment_article_title,
@@ -157,13 +157,22 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "readability_article_paragraphs": readability_article_paragraphs,
 
-            "starts_with_number_post_title": starts_with_number_post_title,
+            "starts_with_number_post_title": 1 if starts_with_number_post_title else -1,
+            "not_starts_with_number_post_title": -1 if starts_with_number_post_title else 1,
+            
             "number_of_dots_post_title": number_of_dots_post_title,
 
-            "has_demonstratives": first_title_word in {"this", "that", "these", "those"},
-            "has_third_pronoun": first_title_word in {"he", "she", "it", "his", "her", "its", "him"},
-            "has_definitive": first_title_word in {"the", "a", "an"},
-            "is_start_adverb": nltk.pos_tag(first_title_word)[0][1] == "RB",
+            "has_demonstratives": 1 if first_title_word in {"this", "that", "these", "those"} else -1,
+            "not_has_demonstratives": -1 if first_title_word in {"this", "that", "these", "those"} else 1,
+            
+            "has_third_pronoun": 1 if first_title_word in {"he", "she", "it", "his", "her", "its", "him"} else -1,
+            "not_has_third_pronoun": -1 if first_title_word in {"he", "she", "it", "his", "her", "its", "him"} else 1,
+            
+            "has_definitive": 1 if first_title_word in {"the", "a", "an"} else -1,
+            "not_has_definitive": -1 if first_title_word in {"the", "a", "an"} else 1,
+            
+            "is_start_adverb": 1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else -1,
+            "not_is_start_adverb": -1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else 1,
 
             "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split()))),
         })
@@ -173,7 +182,7 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 def _extract_truth_labels(dataset: List[Dict]) -> List[Dict]:
     result = []
     for entry in dataset:
-        result.append(entry["truthClass"] == "clickbait")
+        result.append(entry["truthClass"])
     return result
 
 
@@ -231,18 +240,15 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
         features = pickle.load(f)
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
-    features = [[0 if b[1] is None else b[1] for b in a.items()] for a in features]
 
-    for k in reversed(range(len(truth))):
-        if sum(truth) * 2 >= len(truth):
-            break
-        if not truth[k]:
-            del truth[k]
-            del features[k]
+    print(features[0])
+    features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a in features]
+    print(features[0])
 
     if normalization:
         scaler = StandardScaler().fit(features)
         features = scaler.transform(features).tolist()
+        print(features[0])
 
     if pca:
         pca_model = PCA(n_components=0.99, svd_solver='full')
@@ -261,6 +267,7 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
     clf.fit(X_train, y_train)
     print(clf.score(X_test, y_test))
     if optimization:
+        print('Doing optimization...')
         space = {
             "gamma": hp.uniform("gamma", 0.0001, 10.0),
             "C": hp.uniform("C", 0.01, 10.0),
@@ -268,6 +275,8 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
         ml_util.optimize(space, clf, features, truth, [], max_evals=100)
     else:
         ml_util.evaluate(clf, features, truth)
+
+    ml_util.plotlearningcurve(clf, features, truth)
 
 
 def svc_RFE(normalization) -> None:
@@ -295,6 +304,8 @@ def train_and_test_random_forest(normalization, optimize, pca) -> None:
     else:
         ml_util.evaluate(clf, features, truth)
 
+    ml_util.plotlearningcurve(clf, features, truth)
+
 
 def train_and_test_knn(normalization, optimize, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
@@ -309,3 +320,5 @@ def train_and_test_knn(normalization, optimize, pca) -> None:
         ml_util.optimize(space, clf, features, truth, ["n_neighbors", "p", "n_jobs"], max_evals=30)
     else:
         ml_util.evaluate(clf, features, truth)
+
+    ml_util.plotlearningcurve(clf, features, truth)
