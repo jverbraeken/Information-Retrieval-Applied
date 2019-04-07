@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 
 from hyperopt import STATUS_OK
 from hyperopt import fmin, tpe, Trials
-from sklearn.model_selection import cross_validate, learning_curve
+from sklearn.model_selection import cross_validate, learning_curve, train_test_split
+from sklearn.metrics import classification_report, roc_auc_score
 
 
 def objective(clf, features, truth, int_variables, params):
@@ -25,6 +26,28 @@ def evaluate(clf, features, truth):
     results = cross_validate(clf, features, truth, cv=5)
     print(results['train_score'])
     print(results['test_score'])
+
+def metrics(clf, features, truth):
+    print('Calculating metrics 5 times, each time with different train test...')
+    for x in range(0, 5):
+        X_train, X_test, y_train, y_test = train_test_split(features, truth, test_size=0.2)
+        clf.fit(X_train,y_train)
+        preds = clf.predict(X_test)
+        print(classification_report(y_test, preds))
+
+        y_test_bin = []
+        preds_bin = []
+        for i in range(0, len(y_test)):
+            if y_test[i] == 'clickbait':
+                y_test_bin.append(1)
+            else:
+                y_test_bin.append(0)
+            if preds[i] == 'clickbait':
+                preds_bin.append(1)
+            else:
+                preds_bin.append(0)
+                
+        print('ROC AUC score:', roc_auc_score(y_test_bin, preds_bin))
 
 
 def optimize(space, clf, features, truth, int_variables, max_evals=300):

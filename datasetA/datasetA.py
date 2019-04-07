@@ -294,7 +294,7 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
 def train_and_test_svc(normalization, optimization, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
 
-    clf = SVC(verbose=True, gamma='scale')
+    clf = SVC(gamma='scale')
     X_train, X_test, y_train, y_test = train_test_split(features, truth, test_size=0.2)
     clf.fit(X_train, y_train)
     print(clf.score(X_test, y_test))
@@ -308,6 +308,7 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
     else:
         ml_util.evaluate(clf, features, truth)
 
+    ml_util.metrics(clf, features, truth)
     #ml_util.plotlearningcurve(clf, features, truth)
 
 
@@ -324,7 +325,7 @@ def svc_RFE(normalization) -> None:
 def train_and_test_random_forest(normalization, optimize, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
 
-    clf = RandomForestClassifier(verbose=True)
+    clf = RandomForestClassifier(n_estimators = 100)
     if optimize:
         space = {
             "n_estimators": hp.quniform("n_estimators", 1, 20, 1),
@@ -336,8 +337,8 @@ def train_and_test_random_forest(normalization, optimize, pca) -> None:
     else:
         ml_util.evaluate(clf, features, truth)
 
-    ml_util.plotlearningcurve(clf, features, truth)
-
+    ml_util.metrics(clf, features, truth)
+    #ml_util.plotlearningcurve(clf, features, truth)
 
 def train_and_test_knn(normalization, optimize, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
@@ -353,4 +354,5 @@ def train_and_test_knn(normalization, optimize, pca) -> None:
     else:
         ml_util.evaluate(clf, features, truth)
 
-    ml_util.plotlearningcurve(clf, features, truth)
+    ml_util.metrics(clf, features, truth)
+    #ml_util.plotlearningcurve(clf, features, truth)
