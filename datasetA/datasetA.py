@@ -17,6 +17,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
+from sklearn.feature_selection import mutual_info_classif, f_classif
 
 import ml_util
 
@@ -248,6 +249,24 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
 
+    # Save keys for checking information gain of features
+    keys = list(features[0].keys())
+
+    # Transform features to something the classifier can work with
+    features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a in features]
+
+    # Check information gain of features
+    scores = mutual_info_classif(features, truth)
+    print('Mutual information per feature: (higher is better)')
+    for i in range(0, len(scores)):
+        print(keys[i],':',scores[i])
+
+    # Compute ANOVA F-value for features
+    F, pval = f_classif(features, truth)
+    print('Anova F-value per feature: (higher F is better)')
+    for i in range(0, len(F)):
+        print(keys[i], 'F:', F[i], 'p:', pval[i])
+
     print('Balancing..')
     counts = Counter(truth)
     remove = counts['no-clickbait']-counts['clickbait']
@@ -258,9 +277,7 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
             del truth[k]
             del features[k]
             remove -= 1
-
-    features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a in features]
-
+    
     if normalization:
         scaler = StandardScaler().fit(features)
         features = scaler.transform(features).tolist()
