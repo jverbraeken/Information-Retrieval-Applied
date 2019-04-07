@@ -226,6 +226,12 @@ def get_and_store_features() -> None:
         instances.append(instance)
         truths.append(truth)
 
+    # Sort the lists to match ids
+    instance_sorted = sorted(instances[0], key=lambda k: k['id'])
+    instances[0] = instance_sorted
+    truth_sorted = sorted(truths[0], key=lambda k: k['id'])
+    truths[0] = truth_sorted
+
     for sub_dataset, instance in zip(sub_datasets, instances):
         _extract_and_store_features(sub_dataset, instance)
 
