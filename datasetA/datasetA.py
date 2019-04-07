@@ -285,7 +285,7 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
     else:
         ml_util.evaluate(clf, features, truth)
 
-    ml_util.plotlearningcurve(clf, features, truth)
+    #ml_util.plotlearningcurve(clf, features, truth)
 
 
 def svc_RFE(normalization) -> None:
