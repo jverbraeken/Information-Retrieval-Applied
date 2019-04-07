@@ -3,6 +3,7 @@ import json
 import os
 import pickle
 from typing import List, Dict, Tuple
+from collections import Counter
 
 import enchant
 import nltk
@@ -240,6 +241,17 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
         features = pickle.load(f)
     with open(pickle_name_truth, 'rb') as f:
         truth = pickle.load(f)
+
+    print('Balancing..')
+    counts = Counter(truth)
+    remove = counts['no-clickbait']-counts['clickbait']
+    for k in reversed(range(len(truth))):
+        if remove <= 0:
+            break
+        if truth[k] == 'no-clickbait':
+            del truth[k]
+            del features[k]
+            remove -= 1
 
     features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a in features]
 
