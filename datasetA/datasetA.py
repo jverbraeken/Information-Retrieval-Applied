@@ -45,6 +45,8 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
     result = []
 
+    ngram_classifier = train_ngram_classifier(dataset)
+
     for i, item in enumerate(dataset):
         if i % 50 == 0:
             print(str(float(i) * 100 / float(len(dataset))) + "%")
@@ -358,10 +360,16 @@ def train_and_test_knn(normalization, optimize, pca) -> None:
     #ml_util.plotlearningcurve(clf, features, truth)
 
 
-def generate_ngrams(words: List[str], min=1, max=4) -> List[str]:
-    s = []
-    for n in range(min, max):
-        for ngram in ngrams(words, n):
-            s.append(' '.join(str(i) for i in ngram))
-    return s
+def create_ngram_features(words, n=2):
+    ngram_vocab = ngrams(words, n)
+    my_dict = dict([(ng, True) for ng in ngram_vocab])
+    return my_dict
+
+
+def train_ngram_classifier(data):
+    data = []
+    for title, truth in data:
+        data.append((create_ngram_features(title), truth))
+
+    return nltk.NaiveBayesClassifier.train(data)
 
