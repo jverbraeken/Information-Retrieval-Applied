@@ -267,7 +267,7 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     for i in range(0, len(F)):
         print(keys[i], 'F:', F[i], 'p:', pval[i])
 
-    print('Balancing..')
+    # Balancing. Keep as many clickbait as no-clickbait.
     counts = Counter(truth)
     remove = counts['no-clickbait']-counts['clickbait']
     for k in reversed(range(len(truth))):
