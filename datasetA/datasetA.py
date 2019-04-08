@@ -22,6 +22,9 @@ from nltk.util import ngrams
 
 import ml_util
 
+input_data_sorted = None
+input_truth_sorted = None
+
 dictionary = enchant.Dict("en_US")
 sub_datasets = ["datasetA1"]
 sentiment_analyzer = SentimentIntensityAnalyzer()
@@ -45,7 +48,7 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
     result = []
 
-    ngram_classifier = train_ngram_classifier(dataset)
+    ngram_classifier = train_ngram_classifier()
 
     for i, item in enumerate(dataset):
         if i % 50 == 0:
@@ -179,6 +182,8 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             "not_is_start_adverb": -1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else 1,
 
             "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split()))),
+
+            "ngram_analysis": 1 if ngram_classifier.classify(create_ngram_features(item['postText'][0].split(' '))) == 'clickbait' else -1
         })
     return result
 
@@ -234,6 +239,11 @@ def get_and_store_features() -> None:
     instances[0] = instance_sorted
     truth_sorted = sorted(truths[0], key=lambda k: k['id'])
     truths[0] = truth_sorted
+    global input_data_sorted
+    input_data_sorted = instance_sorted
+    global input_truth_sorted
+    input_truth_sorted = truth_sorted
+
 
     for sub_dataset, instance in zip(sub_datasets, instances):
         _extract_and_store_features(sub_dataset, instance)
@@ -366,10 +376,13 @@ def create_ngram_features(words, n=2):
     return my_dict
 
 
-def train_ngram_classifier(data):
-    data = []
-    for title, truth in data:
-        data.append((create_ngram_features(title), truth))
+def train_ngram_classifier() -> nltk.NaiveBayesClassifier:
+    ngrams = []
+    for i in range(len(input_data_sorted)):
+        title = input_data_sorted[i]['postText'][0].split(' ')
+        truth = input_truth_sorted[i]['truthClass']
+        ngrams.append((create_ngram_features(title), truth))
+        print('')
 
-    return nltk.NaiveBayesClassifier.train(data)
+    return nltk.NaiveBayesClassifier.train(ngrams)
 
