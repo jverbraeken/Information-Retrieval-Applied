@@ -18,6 +18,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
 from sklearn.feature_selection import mutual_info_classif, f_classif
+from nltk.util import ngrams
 
 import ml_util
 
@@ -26,7 +27,6 @@ sub_datasets = ["datasetA1"]
 sentiment_analyzer = SentimentIntensityAnalyzer()
 with open("contractions.txt", 'r') as file:
     contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
-
 
 
 def _parse_json(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
@@ -356,3 +356,12 @@ def train_and_test_knn(normalization, optimize, pca) -> None:
 
     ml_util.metrics(clf, features, truth)
     #ml_util.plotlearningcurve(clf, features, truth)
+
+
+def generate_ngrams(words: List[str], min=1, max=4) -> List[str]:
+    s = []
+    for n in range(min, max):
+        for ngram in ngrams(words, n):
+            s.append(' '.join(str(i) for i in ngram))
+    return s
+
