@@ -252,6 +252,31 @@ def get_and_store_features() -> None:
         _extract_and_store_truth_labels(sub_dataset, truth)
 
 
+def append_ngrams_to_features(features: List[List]):
+    instances = []
+    truths = []
+
+    for sub_dataset in sub_datasets:
+        instance, truth = _parse_json(os.path.join("datasetA", sub_dataset, "instances.jsonl"),
+                                      os.path.join("datasetA", sub_dataset, "truth.jsonl"))
+        instances.append(instance)
+        truths.append(truth)
+
+    # Sort the lists to match ids
+    instance_sorted = sorted(instances[0], key=lambda k: k['id'])
+    instances[0] = instance_sorted
+    truth_sorted = sorted(truths[0], key=lambda k: k['id'])
+    truths[0] = truth_sorted
+    global input_data_sorted
+    input_data_sorted = instance_sorted
+    global input_truth_sorted
+    input_truth_sorted = truth_sorted
+
+    ngram_classifier = train_ngram_classifier()
+    for i in range(len(features)):
+        features[i].append(1 if ngram_classifier.classify(create_ngram_features(instance_sorted[i]['postText'][0].split(' '))) == 'clickbait' else -1)
+
+
 def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     name = sub_datasets[0]
     pickle_name_features = os.path.join("generated", name + "-features.pickle")
@@ -266,6 +291,11 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
 
     # Transform features to something the classifier can work with
     features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a in features]
+
+    # Add the ngram_analysis on the fly, so the features do not have to be recalculated.
+    if 'ngram_analysis' not in keys:
+        append_ngrams_to_features(features)
+        keys.append('ngram_analysis')
 
     # Check information gain of features
     scores = mutual_info_classif(features, truth)
