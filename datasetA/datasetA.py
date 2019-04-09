@@ -48,7 +48,8 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
     result = []
 
-    ngram_classifier = train_ngram_classifier()
+    global input_data_sorted, input_truth_sorted
+    ngram_classifier = train_ngram_classifier(input_data_sorted, input_truth_sorted)
 
     for i, item in enumerate(dataset):
         if i % 50 == 0:
@@ -252,29 +253,10 @@ def get_and_store_features() -> None:
         _extract_and_store_truth_labels(sub_dataset, truth)
 
 
-def append_ngrams_to_features(features: List[List]):
-    instances = []
-    truths = []
-
-    for sub_dataset in sub_datasets:
-        instance, truth = _parse_json(os.path.join("datasetA", sub_dataset, "instances.jsonl"),
-                                      os.path.join("datasetA", sub_dataset, "truth.jsonl"))
-        instances.append(instance)
-        truths.append(truth)
-
-    # Sort the lists to match ids
-    instance_sorted = sorted(instances[0], key=lambda k: k['id'])
-    instances[0] = instance_sorted
-    truth_sorted = sorted(truths[0], key=lambda k: k['id'])
-    truths[0] = truth_sorted
-    global input_data_sorted
-    input_data_sorted = instance_sorted
-    global input_truth_sorted
-    input_truth_sorted = truth_sorted
-
-    ngram_classifier = train_ngram_classifier()
+def append_ngrams_to_features(features: List[List], data_features, data_truths):
+    ngram_classifier = train_ngram_classifier(data_features, data_truths)
     for i in range(len(features)):
-        features[i].append(1 if ngram_classifier.classify(create_ngram_features(instance_sorted[i]['postText'][0].split(' '))) == 'clickbait' else -1)
+        features[i].append(1 if ngram_classifier.classify(create_ngram_features(data_features[i]['postText'][0].split(' '))) == 'clickbait' else -1)
 
 
 def _load_features_truth(normalization, pca) -> Tuple[List, List]:
@@ -294,7 +276,8 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
 
     # Add the ngram_analysis on the fly, so the features do not have to be recalculated.
     if 'ngram_analysis' not in keys:
-        append_ngrams_to_features(features)
+        X_train, X_test, y_train, y_test = train_test_split(features, truth, test_size=0.2)
+        append_ngrams_to_features(features, X_train, y_train)
         keys.append('ngram_analysis')
 
     # Check information gain of features
@@ -406,13 +389,12 @@ def create_ngram_features(words, n=2):
     return my_dict
 
 
-def train_ngram_classifier() -> nltk.NaiveBayesClassifier:
+def train_ngram_classifier(features, truths) -> nltk.NaiveBayesClassifier:
     ngrams = []
-    for i in range(len(input_data_sorted)):
-        title = input_data_sorted[i]['postText'][0].split(' ')
-        truth = input_truth_sorted[i]['truthClass']
+    for i in range(len(features)):
+        title = features[i]['postText'][0].split(' ')
+        truth = truths[i]['truthClass']
         ngrams.append((create_ngram_features(title), truth))
-        print('')
 
     return nltk.NaiveBayesClassifier.train(ngrams)
 
