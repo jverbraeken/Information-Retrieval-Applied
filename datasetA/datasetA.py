@@ -2,6 +2,7 @@ import codecs
 import json
 import os
 import pickle
+from functools import reduce
 from typing import List, Dict, Tuple
 from collections import Counter
 
@@ -9,6 +10,7 @@ import enchant
 import nltk
 import textstat
 from hyperopt import hp
+from nltk import word_tokenize
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
@@ -26,6 +28,8 @@ sub_datasets = ["datasetA1"]
 sentiment_analyzer = SentimentIntensityAnalyzer()
 with open("contractions.txt", 'r') as file:
     contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
+stemmer = nltk.PorterStemmer()
+tokenizer = nltk.SpaceTokenizer()
 
 
 
@@ -44,6 +48,7 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
     with open("contractions.txt", 'r') as file:
         contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
     result = []
+    punctuation = "!\"#$%&\\'()*+,-./:;<=>?@[\\]^_`{|}~“"  # Equal to str.punctuation with '“' appended
 
     for i, item in enumerate(dataset):
         if i % 50 == 0:
@@ -54,6 +59,19 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         num_characters_article_keywords = len(item['targetKeywords'])
         num_characters_article_captions = sum([len(x) for x in item['targetCaptions']])
         num_characters_article_paragraphs = sum([len(x) for x in item['targetParagraphs']])
+
+        filtered_post_title = item['postText'][0].translate(str.maketrans("", "", punctuation))
+        stemmed_post_title = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_post_title)]
+        filtered_article_title = item['targetTitle'].translate(str.maketrans("", "", punctuation))
+        stemmed_article_title = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_article_title)]
+        filtered_description = item['targetDescription'].translate(str.maketrans("", "", punctuation))
+        stemmed_description = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_description)]
+        filtered_keywords = reduce(lambda x, y: x + " " + y, item['targetKeywords'].split(',')).translate(str.maketrans("", "", punctuation))
+        stemmed_keywords = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_keywords)]
+        filtered_captions = "" if len(item['targetCaptions']) == 0 else reduce(lambda x, y: x + " " + y, item['targetCaptions']).translate(str.maketrans("", "", punctuation))
+        stemmed_captions = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_captions)]
+        filtered_paragraphs = reduce(lambda x, y: x + " " + y, item['targetParagraphs']).translate(str.maketrans("", "", punctuation))
+        stemmed_paragraphs = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_paragraphs)]
 
         num_formal_words = sum(
             [0 if x == "" else dictionary.check(x) for y in item['targetParagraphs'] for x in y.split(' ')])
@@ -150,15 +168,25 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "ratio_num_characters_article_captions_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_captions / num_characters_article_paragraphs,
 
-            "num_common_words_article_keywords_post_title": 0 if len(item['postText']) == 0 else sum(
-                [item['postText'][0].count(x) for x in item['targetKeywords'].split(', ')]),
-            "num_common_words_article_keywords_article_description": 0 if len(
-                item['targetDescription']) == 0 else sum(
-                [item['targetDescription'][0].count(x) for x in item['targetKeywords'].split(', ')]),
-            "num_common_words_article_keywords_article_captions": 0 if len(item['targetCaptions']) == 0 else sum(
-                [item['targetCaptions'][0].count(x) for x in item['targetKeywords'].split(', ')]),
-            "num_common_words_article_keywords_article_paragraphs": 0 if len(item['targetParagraphs']) == 0 else sum(
-                [item['targetParagraphs'][0].count(x) for x in item['targetKeywords'].split(', ')]),
+            "num_common_words_post_title_article_title": sum([stemmed_post_title.count(x) for x in stemmed_article_title]),
+            "num_common_words_post_title_article_description": sum([stemmed_post_title.count(x) for x in stemmed_description]),
+            "num_common_words_post_title_article_keywords": sum([stemmed_post_title.count(x) for x in stemmed_keywords]),
+            "num_common_words_post_title_article_captions": sum([stemmed_post_title.count(x) for x in stemmed_captions]),
+            "num_common_words_post_title_article_paragraphs": sum([stemmed_post_title.count(x) for x in stemmed_paragraphs]),
+
+            "num_common_words_article_title_article_description": sum([stemmed_article_title.count(x) for x in stemmed_description]),
+            "num_common_words_article_title_article_keywords": sum([stemmed_article_title.count(x) for x in stemmed_keywords]),
+            "num_common_words_article_title_article_captions": sum([stemmed_article_title.count(x) for x in stemmed_captions]),
+            "num_common_words_article_title_article_paragraphs": sum([stemmed_article_title.count(x) for x in stemmed_paragraphs]),
+
+            "num_common_words_article_description_article_keywords": sum([stemmed_description.count(x) for x in stemmed_keywords]),
+            "num_common_words_article_description_article_captions": sum([stemmed_description.count(x) for x in stemmed_captions]),
+            "num_common_words_article_description_article_paragraphs": sum([stemmed_description.count(x) for x in stemmed_paragraphs]),
+
+            "num_common_words_article_keywords_article_captions": sum([stemmed_keywords.count(x) for x in stemmed_captions]),
+            "num_common_words_article_keywords_article_paragraphs": sum([stemmed_keywords.count(x) for x in stemmed_paragraphs]),
+
+            "num_common_words_article_captions_article_paragraphs": sum([stemmed_captions.count(x) for x in stemmed_paragraphs]),
 
             "num_formal_words": num_formal_words,
             "num_informal_words": total_words - num_formal_words,
@@ -174,18 +202,18 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "starts_with_number_post_title": 1 if starts_with_number_post_title else -1,
             "not_starts_with_number_post_title": -1 if starts_with_number_post_title else 1,
-            
+
             "number_of_dots_post_title": number_of_dots_post_title,
 
             "has_demonstratives": 1 if first_title_word in {"this", "that", "these", "those"} else -1,
             "not_has_demonstratives": -1 if first_title_word in {"this", "that", "these", "those"} else 1,
-            
+
             "has_third_pronoun": 1 if first_title_word in {"he", "she", "it", "his", "her", "its", "him"} else -1,
             "not_has_third_pronoun": -1 if first_title_word in {"he", "she", "it", "his", "her", "its", "him"} else 1,
-            
+
             "has_definitive": 1 if first_title_word in {"the", "a", "an"} else -1,
             "not_has_definitive": -1 if first_title_word in {"the", "a", "an"} else 1,
-            
+
             "is_start_adverb": 1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else -1,
             "not_is_start_adverb": -1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else 1,
 
