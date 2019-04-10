@@ -2,24 +2,23 @@ import codecs
 import json
 import os
 import pickle
+from collections import Counter
 from functools import reduce
 from typing import List, Dict, Tuple
-from collections import Counter
 
 import enchant
 import nltk
 import textstat
 from hyperopt import hp
-from nltk import word_tokenize
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFE
+from sklearn.feature_selection import mutual_info_classif, f_classif
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.feature_selection import mutual_info_classif, f_classif
 
 import ml_util
 
@@ -30,7 +29,6 @@ with open("contractions.txt", 'r') as file:
     contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
 stemmer = nltk.PorterStemmer()
 tokenizer = nltk.SpaceTokenizer()
-
 
 
 def _parse_json(file1: str, file2: str) -> Tuple[List[Dict], List[Dict]]:
@@ -66,11 +64,15 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         stemmed_article_title = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_article_title)]
         filtered_description = item['targetDescription'].translate(str.maketrans("", "", punctuation))
         stemmed_description = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_description)]
-        filtered_keywords = reduce(lambda x, y: x + " " + y, item['targetKeywords'].split(',')).translate(str.maketrans("", "", punctuation))
+        filtered_keywords = reduce(lambda x, y: x + " " + y, item['targetKeywords'].split(',')).translate(
+            str.maketrans("", "", punctuation))
         stemmed_keywords = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_keywords)]
-        filtered_captions = "" if len(item['targetCaptions']) == 0 else reduce(lambda x, y: x + " " + y, item['targetCaptions']).translate(str.maketrans("", "", punctuation))
+        filtered_captions = "" if len(item['targetCaptions']) == 0 else reduce(lambda x, y: x + " " + y,
+                                                                               item['targetCaptions']).translate(
+            str.maketrans("", "", punctuation))
         stemmed_captions = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_captions)]
-        filtered_paragraphs = reduce(lambda x, y: x + " " + y, item['targetParagraphs']).translate(str.maketrans("", "", punctuation))
+        filtered_paragraphs = reduce(lambda x, y: x + " " + y, item['targetParagraphs']).translate(
+            str.maketrans("", "", punctuation))
         stemmed_paragraphs = [stemmer.stem(w) for w in tokenizer.tokenize(filtered_paragraphs)]
 
         num_formal_words = sum(
@@ -87,12 +89,13 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         if len(article_paragraph.split()) >= 100:
             readability_article_paragraphs = textstat.flesch_kincaid_grade(article_paragraph)
 
-        number_of_digits_post_title = 0 if len(item['postText'][0]) == 0 else sum(c.isdigit() for c in item['postText'][0])
+        number_of_digits_post_title = 0 if len(item['postText'][0]) == 0 else sum(
+            c.isdigit() for c in item['postText'][0])
         number_of_dots_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0].count('.')
 
         starts_with_number_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0][0].isdigit()
         first_title_word = None if len(item['postText'][0]) == 0 else item['postText'][0].split()[0].lower()
-        
+
         title_tags = nltk.pos_tag(nltk.word_tokenize(item['postText'][0]))
         title_proper_nouns = 0
         title_adverbs = 0
@@ -169,25 +172,40 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "ratio_num_characters_article_captions_article_paragraphs": 0 if num_characters_article_paragraphs == 0 else num_characters_article_captions / num_characters_article_paragraphs,
 
-            "num_common_words_post_title_article_title": sum([stemmed_post_title.count(x) for x in stemmed_article_title]),
-            "num_common_words_post_title_article_description": sum([stemmed_post_title.count(x) for x in stemmed_description]),
-            "num_common_words_post_title_article_keywords": sum([stemmed_post_title.count(x) for x in stemmed_keywords]),
-            "num_common_words_post_title_article_captions": sum([stemmed_post_title.count(x) for x in stemmed_captions]),
-            "num_common_words_post_title_article_paragraphs": sum([stemmed_post_title.count(x) for x in stemmed_paragraphs]),
+            "num_common_words_post_title_article_title": sum(
+                [stemmed_post_title.count(x) for x in stemmed_article_title]),
+            "num_common_words_post_title_article_description": sum(
+                [stemmed_post_title.count(x) for x in stemmed_description]),
+            "num_common_words_post_title_article_keywords": sum(
+                [stemmed_post_title.count(x) for x in stemmed_keywords]),
+            "num_common_words_post_title_article_captions": sum(
+                [stemmed_post_title.count(x) for x in stemmed_captions]),
+            "num_common_words_post_title_article_paragraphs": sum(
+                [stemmed_post_title.count(x) for x in stemmed_paragraphs]),
 
-            "num_common_words_article_title_article_description": sum([stemmed_article_title.count(x) for x in stemmed_description]),
-            "num_common_words_article_title_article_keywords": sum([stemmed_article_title.count(x) for x in stemmed_keywords]),
-            "num_common_words_article_title_article_captions": sum([stemmed_article_title.count(x) for x in stemmed_captions]),
-            "num_common_words_article_title_article_paragraphs": sum([stemmed_article_title.count(x) for x in stemmed_paragraphs]),
+            "num_common_words_article_title_article_description": sum(
+                [stemmed_article_title.count(x) for x in stemmed_description]),
+            "num_common_words_article_title_article_keywords": sum(
+                [stemmed_article_title.count(x) for x in stemmed_keywords]),
+            "num_common_words_article_title_article_captions": sum(
+                [stemmed_article_title.count(x) for x in stemmed_captions]),
+            "num_common_words_article_title_article_paragraphs": sum(
+                [stemmed_article_title.count(x) for x in stemmed_paragraphs]),
 
-            "num_common_words_article_description_article_keywords": sum([stemmed_description.count(x) for x in stemmed_keywords]),
-            "num_common_words_article_description_article_captions": sum([stemmed_description.count(x) for x in stemmed_captions]),
-            "num_common_words_article_description_article_paragraphs": sum([stemmed_description.count(x) for x in stemmed_paragraphs]),
+            "num_common_words_article_description_article_keywords": sum(
+                [stemmed_description.count(x) for x in stemmed_keywords]),
+            "num_common_words_article_description_article_captions": sum(
+                [stemmed_description.count(x) for x in stemmed_captions]),
+            "num_common_words_article_description_article_paragraphs": sum(
+                [stemmed_description.count(x) for x in stemmed_paragraphs]),
 
-            "num_common_words_article_keywords_article_captions": sum([stemmed_keywords.count(x) for x in stemmed_captions]),
-            "num_common_words_article_keywords_article_paragraphs": sum([stemmed_keywords.count(x) for x in stemmed_paragraphs]),
+            "num_common_words_article_keywords_article_captions": sum(
+                [stemmed_keywords.count(x) for x in stemmed_captions]),
+            "num_common_words_article_keywords_article_paragraphs": sum(
+                [stemmed_keywords.count(x) for x in stemmed_paragraphs]),
 
-            "num_common_words_article_captions_article_paragraphs": sum([stemmed_captions.count(x) for x in stemmed_paragraphs]),
+            "num_common_words_article_captions_article_paragraphs": sum(
+                [stemmed_captions.count(x) for x in stemmed_paragraphs]),
 
             "num_formal_words": num_formal_words,
             "num_informal_words": total_words - num_formal_words,
@@ -206,12 +224,10 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             "number_of_dots_post_title": number_of_dots_post_title,
 
             "has_demonstratives": 1 if first_title_word in {"this", "that", "these", "those"} else -1,
-
             "has_third_pronoun": 1 if first_title_word in {"he", "she", "it", "his", "her", "its", "him"} else -1,
-
             "has_definitive": 1 if first_title_word in {"the", "a", "an"} else -1,
-
-            "is_start_adverb": 1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else -1,
+            "is_start_adverb": -1 if first_title_word == None else (
+                1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else -1),
 
             "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split()))),
 
@@ -296,13 +312,14 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     keys = list(features[0].keys())
 
     # Transform features to something the classifier can work with
-    features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a in features]
+    features = [[0 if b[1] is None else -1 if b[1] is False else 1 if b[1] is True else b[1] for b in a.items()] for a
+                in features]
 
     # Check information gain of features
     scores = mutual_info_classif(features, truth)
     print('Mutual information per feature: (higher is better)')
     for i in range(0, len(scores)):
-        print(keys[i],':',scores[i])
+        print(keys[i], ':', scores[i])
 
     # Compute ANOVA F-value for features
     F, pval = f_classif(features, truth)
@@ -312,7 +329,7 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
 
     # Balancing. Keep as many clickbait as no-clickbait.
     counts = Counter(truth)
-    remove = counts['no-clickbait']-counts['clickbait']
+    remove = counts['no-clickbait'] - counts['clickbait']
     for k in reversed(range(len(truth))):
         if remove <= 0:
             break
@@ -320,7 +337,7 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
             del truth[k]
             del features[k]
             remove -= 1
-    
+
     if normalization:
         scaler = StandardScaler().fit(features)
         features = scaler.transform(features).tolist()
@@ -344,6 +361,7 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
     if optimization:
         print('Doing optimization...')
         space = {
+            "kernel": hp.choice("kernel", ["rbf", "linear"]),
             "gamma": hp.uniform("gamma", 0.0001, 10.0),
             "C": hp.uniform("C", 0.01, 10.0),
         }
@@ -352,7 +370,7 @@ def train_and_test_svc(normalization, optimization, pca) -> None:
         ml_util.evaluate(clf, features, truth)
 
     ml_util.metrics(clf, features, truth)
-    #ml_util.plotlearningcurve(clf, features, truth)
+    # ml_util.plotlearningcurve(clf, features, truth)
 
 
 def svc_RFE(normalization) -> None:
@@ -368,7 +386,7 @@ def svc_RFE(normalization) -> None:
 def train_and_test_random_forest(normalization, optimize, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
 
-    clf = RandomForestClassifier(n_estimators = 100)
+    clf = RandomForestClassifier(n_estimators=100)
     if optimize:
         space = {
             "n_estimators": hp.quniform("n_estimators", 1, 20, 1),
@@ -381,7 +399,8 @@ def train_and_test_random_forest(normalization, optimize, pca) -> None:
         ml_util.evaluate(clf, features, truth)
 
     ml_util.metrics(clf, features, truth)
-    #ml_util.plotlearningcurve(clf, features, truth)
+    # ml_util.plotlearningcurve(clf, features, truth)
+
 
 def train_and_test_knn(normalization, optimize, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
@@ -398,4 +417,4 @@ def train_and_test_knn(normalization, optimize, pca) -> None:
         ml_util.evaluate(clf, features, truth)
 
     ml_util.metrics(clf, features, truth)
-    #ml_util.plotlearningcurve(clf, features, truth)
+    # ml_util.plotlearningcurve(clf, features, truth)
