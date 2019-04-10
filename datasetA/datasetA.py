@@ -72,7 +72,20 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         starts_with_number_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0][0].isdigit()
         number_of_dots_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0][0].count('.')
 
-        first_title_word = item['targetTitle'].split()[0].lower()
+        first_title_word = item['postText'][0].split()[0].lower()
+        
+        title_tags = nltk.pos_tag(nltk.word_tokenize(item['postText'][0]))
+        title_proper_nouns = 0
+        title_adverbs = 0
+        title_determiners = 0
+        title_personal_pronouns = 0
+        title_possessive_pronouns = 0
+        for (word, tag) in title_tags:
+            if tag in ['NNP', 'NNPS']: title_proper_nouns += 1
+            if tag in ['RB', 'RBR', 'RBS']: title_adverbs += 1
+            if tag in ['DT', 'PDT', 'WDT']: title_determiners += 1
+            if tag == 'PRP': title_personal_pronouns += 1
+            if tag == 'PRP$': title_possessive_pronouns += 1
 
         result.append({
             "num_characters_post_title": num_characters_post_title,
@@ -177,6 +190,12 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             "not_is_start_adverb": -1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else 1,
 
             "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split()))),
+
+            "title_proper_nouns": title_proper_nouns,
+            "title_adverbs": title_adverbs,
+            "title_determiners": title_determiners,
+            "title_personal_pronouns": title_personal_pronouns,
+            "title_possessive_pronouns": title_possessive_pronouns,
         })
     return result
 
