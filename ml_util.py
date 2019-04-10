@@ -11,7 +11,7 @@ def objective(clf, features, truth, int_variables, params):
     for variable in int_variables:
         params[variable] = int(params[variable])
     clf.set_params(**params)
-    results = cross_validate(clf, features, truth, cv=5, return_train_score=False, n_jobs=-1)
+    results = cross_validate(clf, features, truth, cv=5, return_train_score=False)
     run_time = timer() - start
     best_score = max(results["test_score"])
     loss = 1 - best_score
@@ -26,7 +26,8 @@ def evaluate(clf, features, truth):
 
 def optimize(space, clf, features, truth, int_variables, max_evals=300):
     bayes_trials = Trials()
-    fmin(fn=partial(objective, clf, features, truth, int_variables), space=space, algo=tpe.suggest, max_evals=max_evals,
+    best = fmin(fn=partial(objective, clf, features, truth, int_variables), space=space, algo=tpe.suggest, max_evals=max_evals,
          trials=bayes_trials)
+    print(best)
     bayes_trials_results = sorted(bayes_trials.results, key=lambda x: x['loss'])
     print(1 - bayes_trials_results[0]["loss"])

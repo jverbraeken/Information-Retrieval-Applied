@@ -10,7 +10,10 @@ from hyperopt import hp
 from nltk.sentiment import SentimentIntensityAnalyzer
 from sklearn.decomposition import PCA
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 import ml_util
 
@@ -28,8 +31,7 @@ def _extract_features(dataset: List[str]) -> List[Dict]:
             print(str(float(i) * 100 / float(len(dataset))) + "%")
         num_characters = len(item)
 
-        num_formal_words = sum(
-            [0 if x == "" else dictionary.check(x) for y in item for x in y.split(' ')])
+        num_formal_words = sum([0 if x == "" else dictionary.check(x) for y in item for x in y.split(' ')])
         total_words = len(item.split())
 
         sentiment = sentiment_analyzer.polarity_scores(item)['compound']
@@ -99,8 +101,8 @@ def get_and_store_features() -> None:
     clickbait, non_clickbait = _parse_json(os.path.join("datasetB", "clickbait_data.jsonl"),
                                            os.path.join("datasetB", "non_clickbait_data.jsonl"))
 
-    clickbait.extend(non_clickbait)
     truth = [1] * len(clickbait)
+    clickbait.extend(non_clickbait)
     truth.extend([0] * len(non_clickbait))
     _extract_and_store_features(clickbait)
     _extract_and_store_truth(truth)
@@ -135,6 +137,23 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     return features, truth
 
 
+def train_and_test_svc(normalization, optimization, pca) -> None:
+    features, truth = _load_features_truth(normalization, pca)
+
+    clf = SVC(verbose=True)
+    X_train, X_test, y_train, y_test = train_test_split(features, truth, test_size=0.2)
+    clf.fit(X_train, y_train)
+    print(clf.score(X_test, y_test))
+    if optimization:
+        space = {
+            "gamma": hp.uniform("gamma", 0.0001, 10.0),
+            "C": hp.uniform("C", 0.01, 10.0),
+        }
+        ml_util.optimize(space, clf, features, truth, [], max_evals=100)
+    else:
+        ml_util.evaluate(clf, features, truth)
+
+
 def train_and_test_random_forest(normalization, optimize, pca) -> None:
     features, truth = _load_features_truth(normalization, pca)
 
@@ -147,5 +166,20 @@ def train_and_test_random_forest(normalization, optimize, pca) -> None:
             "min_samples_split": hp.quniform("min_samples_split", 2, 10, 1),
         }
         ml_util.optimize(space, clf, features, truth, ["n_estimators", "max_depth", "min_samples_split"])
+    else:
+        ml_util.evaluate(clf, features, truth)
+
+
+def train_and_test_knn(normalization, optimize, pca) -> None:
+    features, truth = _load_features_truth(normalization, pca)
+
+    clf = KNeighborsClassifier()
+    if optimize:
+        space = {
+            "n_neighbors": hp.quniform("n_neighbors", 1, 10, 1),
+            "p": hp.quniform("p", 1, 3, 1),
+            "n_jobs": hp.quniform("n_jobs", -1, -1, 1),
+        }
+        ml_util.optimize(space, clf, features, truth, ["n_neighbors", "p", "n_jobs"], max_evals=30)
     else:
         ml_util.evaluate(clf, features, truth)

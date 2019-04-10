@@ -20,7 +20,7 @@ from sklearn.svm import SVC
 import ml_util
 
 dictionary = enchant.Dict("en_US")
-sub_datasets = ["datasetA1"]
+sub_datasets = ["datasetA2"]
 sentiment_analyzer = SentimentIntensityAnalyzer()
 with open("contractions.txt", 'r') as file:
     contractions = list(map(lambda x: x.replace('\n', ''), file.readlines()))
@@ -239,6 +239,8 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
         if not truth[k]:
             del truth[k]
             del features[k]
+
+    # Feature selection
 
     if normalization:
         scaler = StandardScaler().fit(features)

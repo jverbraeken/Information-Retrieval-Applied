@@ -13,10 +13,10 @@ train_and_test_methods_A = {
 }
 
 train_and_test_methods_B = {
-    # "svc": lambda normalization, optimization, pca: datasetA.train_and_test_svc(normalization, optimization, pca),
+    "svc": lambda normalization, optimization, pca: datasetB.train_and_test_svc(normalization, optimization, pca),
     "random_forest": lambda normalization, optimization, pca: datasetB.train_and_test_random_forest(normalization,
                                                                                                     optimization, pca),
-    # "knn": lambda normalization, optimization, pca: datasetA.train_and_test_knn(normalization, optimization, pca),
+    "knn": lambda normalization, optimization, pca: datasetB.train_and_test_knn(normalization, optimization, pca),
 }
 
 
