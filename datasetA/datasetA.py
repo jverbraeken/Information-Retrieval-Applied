@@ -69,10 +69,10 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         if len(article_paragraph.split()) >= 100:
             readability_article_paragraphs = textstat.flesch_kincaid_grade(article_paragraph)
 
-        starts_with_number_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0][0].isdigit()
-        number_of_dots_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0][0].count('.')
+        number_of_digits_post_title = 0 if len(item['postText'][0]) == 0 else sum(c.isdigit() for c in item['postText'][0])
+        number_of_dots_post_title = 0 if len(item['postText'][0]) == 0 else item['postText'][0].count('.')
 
-        first_title_word = item['postText'][0].split()[0].lower()
+        first_title_word = None if len(item['postText'][0]) == 0 else item['postText'][0].split()[0].lower()
         
         title_tags = nltk.pos_tag(nltk.word_tokenize(item['postText'][0]))
         title_proper_nouns = 0
@@ -172,9 +172,7 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
 
             "readability_article_paragraphs": readability_article_paragraphs,
 
-            "starts_with_number_post_title": 1 if starts_with_number_post_title else -1,
-            "not_starts_with_number_post_title": -1 if starts_with_number_post_title else 1,
-            
+            "number_of_digits_post_title": number_of_digits_post_title,
             "number_of_dots_post_title": number_of_dots_post_title,
 
             "has_demonstratives": 1 if first_title_word in {"this", "that", "these", "those"} else -1,
@@ -185,9 +183,6 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
             
             "has_definitive": 1 if first_title_word in {"the", "a", "an"} else -1,
             "not_has_definitive": -1 if first_title_word in {"the", "a", "an"} else 1,
-            
-            "is_start_adverb": 1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else -1,
-            "not_is_start_adverb": -1 if nltk.pos_tag(first_title_word)[0][1] == "RB" else 1,
 
             "num_contractions": len(list(filter(lambda x: x in contractions, item["targetTitle"].split()))),
 
