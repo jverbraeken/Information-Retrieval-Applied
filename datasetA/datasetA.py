@@ -80,7 +80,7 @@ def _extract_features(dataset: List[Dict]) -> List[Dict]:
         total_words = len([x for y in item['targetParagraphs'] for x in y.split()])
 
         sentiment_post_title = sentiment_analyzer.polarity_scores(item['postText'][0])['compound']
-        sentiment_article_title = sentiment_analyzer.polarity_scores(item['targetTitle'][0])['compound']
+        sentiment_article_title = sentiment_analyzer.polarity_scores(item['targetTitle'])['compound']
         sentiment_article_paragraphs = sum(
             sentiment_analyzer.polarity_scores(x)['compound'] for x in item['targetParagraphs'])
 
@@ -327,7 +327,7 @@ def _load_features_truth(normalization, pca) -> Tuple[List, List]:
     for i in range(0, len(F)):
         print(keys[i], 'F:', F[i], 'p:', pval[i])
 
-    # Balancing. Keep as many clickbait as no-clickbait.
+    # Balancing. Keep as many clickbait as non-clickbait articles
     counts = Counter(truth)
     remove = counts['no-clickbait'] - counts['clickbait']
     for k in reversed(range(len(truth))):
